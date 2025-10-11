@@ -27,6 +27,35 @@ public class WebSecurityConfig {
 
     /**
      * ✅ Cấu hình chính cho phân quyền & bảo mật
+     * 
+     * PHÂN QUYỀN THEO YÊU CẦU ĐỒ ÁN:
+     * 
+     * 1. Guest (không cần đăng nhập):
+     *    - Xem trang chủ với top 10 sản phẩm bán chạy
+     *    - Xem sản phẩm theo danh mục
+     *    - Đăng ký tài khoản
+     * 
+     * 2. User (ROLE_USER):
+     *    - Tất cả chức năng Guest
+     *    - Profile và quản lý địa chỉ nhận hàng
+     *    - Giỏ hàng, thanh toán (COD, VNPAY)
+     *    - Quản lý lịch sử mua hàng
+     *    - Yêu thích và đánh giá sản phẩm
+     *    - Sử dụng mã giảm giá
+     * 
+     * 3. Employee (ROLE_EMPLOYEE):
+     *    - Tất cả chức năng User
+     *    - Quản lý sản phẩm
+     *    - Quản lý đơn hàng theo trạng thái
+     *    - Tạo chương trình khuyến mãi
+     *    - Thống kê doanh thu cơ bản
+     * 
+     * 4. Admin (ROLE_ADMIN):
+     *    - Quản lý user
+     *    - Quản lý toàn bộ sản phẩm
+     *    - Quản lý danh mục, mã giảm giá
+     *    - Thống kê doanh thu tại /admin/thong-ke-doanh-thu
+     *    - Quản lý phương thức thanh toán
      */
     @Configuration
     public static class AppConfiguration {
@@ -56,13 +85,13 @@ public class WebSecurityConfig {
                     .antMatchers(
                         "/profile/**", "/orders/**", "/payment/**",
                         "/comment/**", "/discount/**"
-                    ).hasAnyRole("USER", "VENDOR", "ADMIN")
+                    ).hasAnyRole("USER", "EMPLOYEE", "ADMIN")
 
-                    // ✅ Vendor — có thêm quyền quản lý shop riêng
+                    // ✅ Employee — có thêm quyền quản lý shop riêng
                     .antMatchers(
                         "/vendor/**", "/shop/**", "/order-management/**",
                         "/promotion/**", "/revenue/**"
-                    ).hasAnyRole("VENDOR", "ADMIN")
+                    ).hasAnyRole("EMPLOYEE", "ADMIN")
 
                     // ✅ Admin — quyền cao nhất, quản lý toàn hệ thống
                     .antMatchers(

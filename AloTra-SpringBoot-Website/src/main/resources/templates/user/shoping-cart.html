@@ -694,6 +694,10 @@
                 submitBtn.prop('disabled', !checkbox.prop('checked'));
             });
 
+            
+            
+            
+            
             // =============================HANDLE SUBMIT==============================
             $("#submitBtn").on('click', async function () {
                 var voucherId = $("#selected-voucher").attr('data-selected')
@@ -711,8 +715,10 @@
                     return;
                 }
 
-                if ($('.shipping-choose.active p').text().trim() == "") {
-                    swal("Thông báo", "Vui lòng chọn địa chỉ trước khi đặt hàng", "error")
+             // Kiểm tra địa chỉ - cho phép cả địa chỉ đã chọn hoặc địa chỉ vừa nhập
+                var selectedAddressElement = $('.shipping-choose.active p');
+                if (selectedAddressElement.length == 0 || selectedAddressElement.text().trim() == "") {
+                    swal("Thông báo", "Vui lòng chọn hoặc thêm địa chỉ giao hàng trước khi đặt hàng", "error")
                     return;
                 }
 

@@ -32,7 +32,13 @@ public class AddressShippingServiceImpl implements AddressShippingService {
 
     @Override
     public List<AddressShippingDto> getAddressShippingByAccountId() {
-        List<AddressShipping> addressShippings = addressShippingRepository.findAllByCustomer_Account_Id(getCurrentLogin().getId());
+        Account currentAccount = getCurrentLogin();
+        if (currentAccount == null) {
+            // Guest không có địa chỉ đã lưu, trả về danh sách rỗng
+            return new ArrayList<>();
+        }
+        
+        List<AddressShipping> addressShippings = addressShippingRepository.findAllByCustomer_Account_Id(currentAccount.getId());
         List<AddressShippingDto> addressShippingDtos = new ArrayList<>();
         addressShippings.forEach(item -> {
             AddressShippingDto addressShippingDto = new AddressShippingDto();
@@ -45,17 +51,29 @@ public class AddressShippingServiceImpl implements AddressShippingService {
 
     @Override
     public AddressShippingDto saveAddressShippingUser(AddressShippingDto addressShippingDto) {
-        List<AddressShipping> addressShippings = addressShippingRepository.findAllByCustomer_Account_Id(getCurrentLogin().getId());
-        if(addressShippings.size() > 5) {
+        Account currentAccount = getCurrentLogin();
+        
+        // Nếu là guest, chỉ trả về địa chỉ mà không lưu vào database
+        if (currentAccount == null) {
+            // Guest checkout - không lưu địa chỉ vào DB
+            // Chỉ trả về địa chỉ để sử dụng cho đơn hàng hiện tại
+            return addressShippingDto;
+        }
+        
+        // User đã đăng nhập - kiểm tra giới hạn 5 địa chỉ
+        List<AddressShipping> addressShippings = addressShippingRepository.findAllByCustomer_Account_Id(currentAccount.getId());
+        if(addressShippings.size() >= 5) {
             throw new ShopApiException(HttpStatus.BAD_REQUEST, "Bạn chỉ được thêm tối đa 5 địa chỉ");
         }
+        
         AddressShipping addressShipping = new AddressShipping();
         addressShipping.setAddress(addressShippingDto.getAddress());
-        Customer customer = new Customer();
-        if(SecurityContextHolder.getContext().getAuthentication() != null) {
-            customer = getCurrentLogin().getCustomer();
-            addressShipping.setCustomer(customer);
+        
+        Customer customer = currentAccount.getCustomer();
+        if (customer == null) {
+            throw new ShopApiException(HttpStatus.BAD_REQUEST, "Tài khoản không có thông tin khách hàng");
         }
+        addressShipping.setCustomer(customer);
 
         AddressShipping addressShippingNew = addressShippingRepository.save(addressShipping);
         return new AddressShippingDto(addressShippingNew.getId(), addressShippingNew.getAddress());
@@ -64,8 +82,11 @@ public class AddressShippingServiceImpl implements AddressShippingService {
     @Override
     public AddressShippingDto saveAddressShippingAdmin(AddressShippingDtoAdmin addressShippingDto) {
         AddressShipping addressShipping = new AddressShipping();
-        addressShipping.setAddress(addressShipping.getAddress());
-        Customer customer = customerRepository.findById(addressShippingDto.getCustomerId()).orElseThrow(() -> new NotFoundException("Customer not found"));
+        // Sửa lỗi: dùng addressShippingDto.getAddress() thay vì addressShipping.getAddress()
+        addressShipping.setAddress(addressShippingDto.getAddress());
+        
+        Customer customer = customerRepository.findById(addressShippingDto.getCustomerId())
+                .orElseThrow(() -> new NotFoundException("Customer not found"));
         addressShipping.setCustomer(customer);
 
         AddressShipping addressShippingNew = addressShippingRepository.save(addressShipping);
@@ -74,20 +95,25 @@ public class AddressShippingServiceImpl implements AddressShippingService {
 
     @Override
     public void deleteAddressShipping(Long id) {
-        AddressShipping addressShipping = addressShippingRepository.findById(id).orElseThrow(null);
+        AddressShipping addressShipping = addressShippingRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Địa chỉ không tồn tại"));
         addressShippingRepository.delete(addressShipping);
     }
 
     private Account getCurrentLogin() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        
+        // Kiểm tra authentication có null không hoặc chưa authenticated
+        if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getPrincipal())) {
+            return null;
+        }
+        
+        // Kiểm tra nếu principal là CustomUserDetails
         if (authentication.getPrincipal() instanceof CustomUserDetails) {
             CustomUserDetails customUserDetails = (CustomUserDetails) authentication.getPrincipal();
             return customUserDetails.getAccount();
         }
 
-        // Handle the case where the principal is not a CustomUserDetails
-        return null; // or throw an exception, depending on your use case
+        return null;
     }
-
-
 }

@@ -56,13 +56,13 @@ public class WebSecurityConfig {
                     .antMatchers(
                         "/profile/**", "/orders/**", "/payment/**",
                         "/comment/**", "/discount/**"
-                    ).hasAnyRole("USER", "VENDOR", "ADMIN")
+                    ).hasAnyRole("USER", "EMPLOYEE", "ADMIN")
 
-                    // ✅ Vendor — có thêm quyền quản lý shop riêng
+                    // ✅ Employee — có thêm quyền quản lý shop riêng
                     .antMatchers(
                         "/vendor/**", "/shop/**", "/order-management/**",
                         "/promotion/**", "/revenue/**"
-                    ).hasAnyRole("VENDOR", "ADMIN")
+                    ).hasAnyRole("EMPLOYEE", "ADMIN")
 
                     // ✅ Admin — quyền cao nhất, quản lý toàn hệ thống
                     .antMatchers(

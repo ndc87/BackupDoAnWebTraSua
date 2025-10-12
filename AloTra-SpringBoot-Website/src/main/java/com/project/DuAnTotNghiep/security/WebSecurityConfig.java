@@ -17,150 +17,102 @@ import org.springframework.security.web.authentication.SavedRequestAwareAuthenti
 @EnableWebSecurity
 public class WebSecurityConfig {
 
-    /**
-     * ✅ Mã hóa mật khẩu
-     */
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+	/**
+	 * ✅ Mã hóa mật khẩu
+	 */
+	@Bean
+	public PasswordEncoder passwordEncoder() {
+		return new BCryptPasswordEncoder();
+	}
 
-    /**
-     * ✅ Cấu hình chính cho phân quyền & bảo mật
-     * 
-     * PHÂN QUYỀN THEO YÊU CẦU ĐỒ ÁN:
-     * 
-     * 1. Guest (không cần đăng nhập):
-     *    - Xem trang chủ với top 10 sản phẩm bán chạy
-     *    - Xem sản phẩm theo danh mục
-     *    - Đăng ký tài khoản
-     * 
-     * 2. User (ROLE_USER):
-     *    - Tất cả chức năng Guest
-     *    - Profile và quản lý địa chỉ nhận hàng
-     *    - Giỏ hàng, thanh toán (COD, VNPAY)
-     *    - Quản lý lịch sử mua hàng
-     *    - Yêu thích và đánh giá sản phẩm
-     *    - Sử dụng mã giảm giá
-     * 
-     * 3. Employee (ROLE_EMPLOYEE):
-     *    - Tất cả chức năng User
-     *    - Quản lý sản phẩm
-     *    - Quản lý đơn hàng theo trạng thái
-     *    - Tạo chương trình khuyến mãi
-     *    - Thống kê doanh thu cơ bản
-     * 
-     * 4. Admin (ROLE_ADMIN):
-     *    - Quản lý user
-     *    - Quản lý toàn bộ sản phẩm
-     *    - Quản lý danh mục, mã giảm giá
-     *    - Thống kê doanh thu tại /admin/thong-ke-doanh-thu
-     *    - Quản lý phương thức thanh toán
-     */
-    @Configuration
-    public static class AppConfiguration {
-        @Bean
-        public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+	/**
+	 * ✅ Cấu hình chính cho phân quyền & bảo mật
+	 * 
+	 * PHÂN QUYỀN THEO YÊU CẦU ĐỒ ÁN:
+	 * 
+	 * 1. Guest (không cần đăng nhập): - Xem trang chủ với top 10 sản phẩm bán chạy
+	 * - Xem sản phẩm theo danh mục - Đăng ký tài khoản
+	 * 
+	 * 2. User (ROLE_USER): - Tất cả chức năng Guest - Profile và quản lý địa chỉ
+	 * nhận hàng - Giỏ hàng, thanh toán (COD, VNPAY) - Quản lý lịch sử mua hàng -
+	 * Yêu thích và đánh giá sản phẩm - Sử dụng mã giảm giá
+	 * 
+	 * 3. Employee (ROLE_EMPLOYEE): - Tất cả chức năng User - Quản lý sản phẩm -
+	 * Quản lý đơn hàng theo trạng thái - Tạo chương trình khuyến mãi - Thống kê
+	 * doanh thu cơ bản
+	 * 
+	 * 4. Admin (ROLE_ADMIN): - Quản lý user - Quản lý toàn bộ sản phẩm - Quản lý
+	 * danh mục, mã giảm giá - Thống kê doanh thu tại /admin/thong-ke-doanh-thu -
+	 * Quản lý phương thức thanh toán
+	 */
+	@Configuration
+	public static class AppConfiguration {
+		@Bean
+		public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+			http.csrf().disable().authorizeRequests()
+					// ⚙️ Cho phép truy cập tài nguyên tĩnh (CSS, JS, images, ...)
+					.antMatchers("/css/**", "/js/**", "/images/**", "/vendor/**", "/plugins/**", "/webjars/**",
+							"/favicon.ico", "/error")
+					.permitAll()
 
-            http
-                .csrf().disable()
-                .authorizeRequests()
+					// 🟢 Guest (public pages)
+					.antMatchers("/", "/home/**", "/product/**", "/about/**", "/contact/**").permitAll()
 
-                    // ✅ Cho phép tất cả tài nguyên tĩnh để frontend load hoàn toàn
-                    .antMatchers(
-                        "/css/**", "/js/**", "/images/**", "/vendor/**",
-                        "/fonts/**", "/plugins/**", "/static/**",
-                        "/webjars/**", "/favicon.ico", "/error"
-                    ).permitAll()
+					// 🔵 User
+					.antMatchers("/profile/**", "/orders/**", "/checkout/**", "/comment/**", "/discount/**",
+							"/favorite/**", "/cart/**", "/payment/**", "/history/**")
+					.hasAnyRole("USER", "VENDOR", "ADMIN")
 
-                    // ✅ Guest — có thể xem sản phẩm và mua hàng mà không cần login
-                    .antMatchers(
-                        "/", "/home/**", "/getproduct/**", "/getabout/**",
-                        "/getcontact/**", "/user-login", "/register",
-                        "/forgot-pass/**", "/verify-email/**",
-                        "/shoping-cart/**", "/checkout/**" // 👈 Guest allowed
-                    ).permitAll()
+					// 🟣 Vendor (Seller)
+					.antMatchers("/vendor/**", "/shop-management/**", "/order-management/**", "/promotion/**",
+							"/revenue/**")
+					.hasAnyRole("VENDOR", "ADMIN")
 
-                    // ✅ User — các chức năng cá nhân hóa
-                    .antMatchers(
-                        "/profile/**", "/orders/**", "/payment/**",
-                        "/comment/**", "/discount/**"
-                    ).hasAnyRole("USER", "EMPLOYEE", "ADMIN")
+					// 🔴 Admin
+					.antMatchers("/admin/**", "/management/**", "/system/**").hasRole("ADMIN")
 
-                    // ✅ Employee — có thêm quyền quản lý shop riêng
-                    .antMatchers(
-                        "/vendor/**", "/shop/**", "/order-management/**",
-                        "/promotion/**", "/revenue/**"
-                    ).hasAnyRole("EMPLOYEE", "ADMIN")
+					// Các request khác thì cho phép (để login form không bị chặn)
+					.anyRequest().permitAll()
 
-                    // ✅ Admin — quyền cao nhất, quản lý toàn hệ thống
-                    .antMatchers(
-                        "/admin/**", "/management/**", "/system/**"
-                    ).hasRole("ADMIN")
+					.and().formLogin().loginPage("/user-login") // trang login
+					.loginProcessingUrl("/user_login") // action form login
+					.usernameParameter("email") // dùng email làm username
+					.defaultSuccessUrl("/", true) // chuyển về trang chủ sau khi login
+					.permitAll().and().logout().logoutUrl("/user_logout").logoutSuccessUrl("/").permitAll().and()
+					.rememberMe().key("AbcDefgHijklmnOp_123456789").rememberMeParameter("remember-me")
+					.tokenValiditySeconds(7 * 24 * 60 * 60);
 
-                    // ✅ Mặc định: các request khác đều được phép (frontend tự do)
-                    .anyRequest().permitAll()
+			http.headers().frameOptions().disable();
+			return http.build();
+		}
 
-                .and()
-                    // ✅ Cấu hình form login
-                    .formLogin()
-                        .loginPage("/user-login")
-                        .loginProcessingUrl("/user_login")
-                        .usernameParameter("email")
-                        .defaultSuccessUrl("/", true)
-                        .successHandler(successHandler())
-                        .permitAll()
+		
+	/**
+	 * ✅ Xử lý sau khi login thành công
+	 */
+	@Bean
+	public AuthenticationSuccessHandler successHandler() {
+		SavedRequestAwareAuthenticationSuccessHandler handler = new SavedRequestAwareAuthenticationSuccessHandler();
+		handler.setDefaultTargetUrl("/");
+		return handler;
+	}
 
-                .and()
-                    // ✅ Cấu hình logout
-                    .logout()
-                        .logoutUrl("/user_logout")
-                        .logoutSuccessUrl("/")
-                        .permitAll()
+	/**
+	 * ✅ Cần cho form login hoạt động
+	 */
+	@Bean
+	public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
+		return authConfig.getAuthenticationManager();
+	}
 
-                .and()
-                    // ✅ Remember-me
-                    .rememberMe()
-                        .key("AbcDefgHijklmnOp_123456789")
-                        .rememberMeParameter("remember-me")
-                        .tokenValiditySeconds(7 * 24 * 60 * 60);
-
-            // ✅ Cho phép iframe (cho console hoặc template nhúng)
-            http.headers().frameOptions().disable();
-
-            return http.build();
-        }
-
-        /**
-         * ✅ Xử lý sau khi login thành công
-         */
-        @Bean
-        public AuthenticationSuccessHandler successHandler() {
-            SavedRequestAwareAuthenticationSuccessHandler handler =
-                    new SavedRequestAwareAuthenticationSuccessHandler();
-            handler.setDefaultTargetUrl("/");
-            return handler;
-        }
-    }
-
-    /**
-     * ✅ Cần cho form login hoạt động
-     */
-    @Bean
-    public AuthenticationManager authenticationManager(
-            AuthenticationConfiguration authConfig) throws Exception {
-        return authConfig.getAuthenticationManager();
-    }
-
-    /**
-     * ✅ Mở quyền load static resource cho chắc chắn
-     */
-    @Bean
-    public WebSecurityCustomizer webSecurityCustomizer() {
-        return (web) -> web.ignoring().antMatchers(
-            "/img/**", "/js/**", "/css/**", "/fonts/**", "/plugins/**",
-            "/vendor/**", "/static/**", "/webjars/**", "/images/**",
-            "/favicon.ico", "/error"
-        );
-    }
+	/**
+	 * ✅ Mở quyền load static resource cho chắc chắn
+	 */
+	// Cho phép truy cập tài nguyên tĩnh mà không cần kiểm tra bảo mật
+	@Bean
+	public WebSecurityCustomizer webSecurityCustomizer() {
+		return (web) -> web.ignoring().antMatchers("/img/**", "/js/**", "/css/**", "/fonts/**", "/plugins/**",
+				"/vendor/**", "/static/**", "/webjars/**", "/images/**", "/favicon.ico", "/error");
+	}
+}
 }

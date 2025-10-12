@@ -13,49 +13,53 @@ import java.util.List;
 
 @Data
 public class CustomUserDetails implements UserDetails {
-    private Account account;
+	private Account account;
 
-    public CustomUserDetails(Account account) {
-        this.account = account;
-    }
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        Role role = account.getRole();
-        List<SimpleGrantedAuthority> authorityList = new ArrayList<>();
+	public CustomUserDetails(Account account) {
+		this.account = account;
+	}
 
-            authorityList.add(new SimpleGrantedAuthority(role.getName().toString()));
-        return authorityList;
-    }
+	@Override
+	public Collection<? extends GrantedAuthority> getAuthorities() {
+	    Role role = account.getRole();
+	    List<SimpleGrantedAuthority> authorities = new ArrayList<>();
 
-    @Override
-    public String getPassword() {
-        return account.getPassword();
-    }
+	    // DB lưu Enum ROLE_ADMIN, ROLE_USER, ROLE_VENDOR, ROLE_GUEST
+	    authorities.add(new SimpleGrantedAuthority(role.getName().name()));
 
-    @Override
-    public String getUsername() {
-        return account.getEmail();
-    }
+	    return authorities;
+	}
 
-    @Override
-    public boolean isAccountNonExpired() {
-        return true;
-    }
 
-    @Override
-    public boolean isAccountNonLocked() {
-        return account.isNonLocked();
-    }
+	@Override
+	public String getPassword() {
+		return account.getPassword();
+	}
 
-    @Override
-    public boolean isCredentialsNonExpired() {
-        return true;
-    }
+	@Override
+	public String getUsername() {
+		return account.getEmail();
+	}
 
-    @Override
-    public boolean isEnabled() {
-        return true;
-    }
+	@Override
+	public boolean isAccountNonExpired() {
+		return true;
+	}
+
+	@Override
+	public boolean isAccountNonLocked() {
+		return account.isNonLocked();
+	}
+
+	@Override
+	public boolean isCredentialsNonExpired() {
+		return true;
+	}
+
+	@Override
+	public boolean isEnabled() {
+		return true;
+	}
 
 //    public String getFullName() {
 //        return this.account.getFullName();

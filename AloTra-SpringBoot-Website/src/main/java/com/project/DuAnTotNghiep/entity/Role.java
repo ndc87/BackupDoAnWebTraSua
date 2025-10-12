@@ -7,10 +7,10 @@ import javax.persistence.*;
 import java.io.Serializable;
 import java.util.Date;
 
-@Data
 @AllArgsConstructor
 @NoArgsConstructor
-
+@Getter
+@Setter
 @Entity
 @Table(name = "Role")
 public class Role implements Serializable {

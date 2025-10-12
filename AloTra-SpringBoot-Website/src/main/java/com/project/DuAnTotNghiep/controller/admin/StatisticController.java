@@ -13,6 +13,10 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+
 
 import java.time.*;
 import java.time.format.DateTimeFormatter;
@@ -36,6 +40,20 @@ public class StatisticController {
 
     @GetMapping("/admin/thong-ke-doanh-thu")
     public String viewStatisticRevenuePage(Model model) {
+    	// Debug authentication
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        System.out.println("🔍 === DEBUG AUTHENTICATION ===");
+        System.out.println("🔍 Username: " + auth.getName());
+        System.out.println("🔍 Authorities: " + auth.getAuthorities());
+        
+        auth.getAuthorities().forEach(authority -> {
+            System.out.println("🔍 Authority: '" + authority.getAuthority() + "'");
+        });
+        
+        boolean hasAdmin = auth.getAuthorities().stream()
+            .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        System.out.println("🔍 Has ROLE_ADMIN: " + hasAdmin);
+        System.out.println("🔍 ==============================");
         LocalDateTime currentDateTime = LocalDateTime.now();
 
         LocalDateTime firstDayOfWeek = currentDateTime.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).with(LocalTime.MIN);

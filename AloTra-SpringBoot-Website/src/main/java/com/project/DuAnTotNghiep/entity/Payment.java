@@ -25,6 +25,6 @@ public class Payment {
     private Integer statusExchange;
 
     @OneToOne
-    @JoinColumn(name = "bill_id")
+    @JoinColumn(name = "bill_id", nullable = true)
     private Bill bill;
 }

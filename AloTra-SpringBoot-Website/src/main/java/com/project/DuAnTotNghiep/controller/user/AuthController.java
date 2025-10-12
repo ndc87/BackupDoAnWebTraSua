@@ -58,76 +58,68 @@ public class AuthController {
     }
 
     @PostMapping("/register-save")
-    public String saveregister(Model model, @Validated @ModelAttribute AccountDto accountDto, RedirectAttributes redirectAttributes) throws MessagingException {
+    public String saveRegister(Model model, 
+                               @Validated @ModelAttribute AccountDto accountDto, 
+                               RedirectAttributes redirectAttributes) throws MessagingException {
 
-        Account accountByEmail= accountService.findByEmail(accountDto.getEmail());
-
-        //Kiểm tra xem số điện thoại đã có tài khoản chưa
+        Account accountByEmail = accountService.findByEmail(accountDto.getEmail());
         Account accountByPhone = accountRepository.findByCustomer_PhoneNumber(accountDto.getPhoneNumber());
 
-        if(accountByEmail !=null ){
-            redirectAttributes.addFlashAttribute("errorMessage","Email đã tồn tại !");
+        if (accountByEmail != null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Email đã tồn tại !");
             return "redirect:/register";
         }
-        if(accountByPhone != null) {
-            redirectAttributes.addFlashAttribute("errorMessage","Số điện thoại " + accountDto.getPhoneNumber() + " đã được đăng ký!");
+        if (accountByPhone != null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Số điện thoại " + accountDto.getPhoneNumber() + " đã được đăng ký!");
             return "redirect:/register";
         }
 
-            Account account = new Account();
-            account.setEmail(accountDto.getEmail());
-            Account account1 = accountRepository.findTopByOrderByIdDesc();
-            Long nextCode = (account1 == null) ? 1 : account1.getId() + 1;
-            String accCode = "TK" + String.format("%04d", nextCode);
-            account.setCode(accCode);
+        // ✅ Tạo tài khoản mới
+        Account account = new Account();
+        account.setEmail(accountDto.getEmail());
 
-            String encoded = passwordEncoder.encode(accountDto.getPassword());
-            account.setPassword(encoded);
-            account.setNonLocked(true);
-            Role role = new Role();
-            role.setId(3L);
-            account.setRole(role);
-            Customer customer = null;
+        Account lastAccount = accountRepository.findTopByOrderByIdDesc();
+        Long nextCode = (lastAccount == null) ? 1 : lastAccount.getId() + 1;
+        String accCode = "TK" + String.format("%04d", nextCode);
+        account.setCode(accCode);
 
-            //Nếu số điện thoại đã tồn tại
-            if(customerRepository.existsByPhoneNumber(accountDto.getPhoneNumber())) {
-                customer = customerRepository.findByPhoneNumber(accountDto.getPhoneNumber());
-                customer.setName(accountDto.getName());
-            }
-            else {
-                customer = new Customer();
-                customer.setName(accountDto.getName());
-                customer.setPhoneNumber(accountDto.getPhoneNumber());
-                Customer customerCurrent = customerRepository.findTopByOrderByIdDesc();
-                Long nextCodeAcc = (customerCurrent == null) ? 1 : customerCurrent.getId() + 1;
-                String productCode = "KH" + String.format("%04d", nextCodeAcc);
-                customer.setCode(productCode);
+        String encoded = passwordEncoder.encode(accountDto.getPassword());
+        account.setPassword(encoded);
+        account.setNonLocked(true);
 
-            }
-            account.setCustomer(customer);
-            account.setCreateDate(LocalDateTime.now());
-            customerRepository.save(customer);
-            accountService.save(account);
-            redirectAttributes.addFlashAttribute("success", "Đăng ký tài khoản thành công");
-            return "redirect:/user-login";
+        // Mặc định role USER
+        Role role = new Role();
+        role.setId(3L);
+        account.setRole(role);
+
+        // ✅ Xử lý Customer
+        Customer customer;
+        if (customerRepository.existsByPhoneNumber(accountDto.getPhoneNumber())) {
+            customer = customerRepository.findByPhoneNumber(accountDto.getPhoneNumber());
+            customer.setName(accountDto.getName());
+        } else {
+            customer = new Customer();
+            customer.setName(accountDto.getName());
+            customer.setPhoneNumber(accountDto.getPhoneNumber());
+
+            Customer lastCustomer = customerRepository.findTopByOrderByIdDesc();
+            Long nextCustomerCode = (lastCustomer == null) ? 1 : lastCustomer.getId() + 1;
+            String cusCode = "KH" + String.format("%04d", nextCustomerCode);
+            customer.setCode(cusCode);
         }
 
-        @PostMapping("/reset-page")
-        public String viewResetPassPage(@RequestParam String email, RedirectAttributes redirectAttributes) throws MessagingException {
-            try {
-                verificationCodeService.createVerificationCode(email);
-            }
-            catch (ShopApiException exception) {
-                redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
-                return "redirect:/forgot-pass";
-            }
-            return "redirect:/reset-pass";
-        }
+        account.setCustomer(customer);
+        account.setCreateDate(LocalDateTime.now());
+        customerRepository.save(customer);
+        accountService.save(account);
 
-        @GetMapping("/reset-pass")
-        public String viewResetPassPage() {
-            return "user/reset-pass";
-        }
+        // ✅ Gửi OTP xác thực email
+        verificationCodeService.createVerificationCode(account.getEmail());
+        redirectAttributes.addFlashAttribute("email", account.getEmail()); // 👈 thêm dòng này
+
+        redirectAttributes.addFlashAttribute("success", "Đăng ký thành công! Vui lòng kiểm tra email để xác thực tài khoản.");
+        return "redirect:/verify-otp";
+    }
 
 
     @PostMapping("/reset-password")
@@ -147,5 +139,33 @@ public class AuthController {
             model.addFlashAttribute("errorMessage", "Mã xác thực không hợp lệ");
             return "redirect:/reset-pass";
         }
+    }
+    @GetMapping("/verify-otp")
+    public String verifyOtpPage() {
+        return "user/verify-otp"; // Trang HTML để người dùng nhập mã OTP
+    }
+
+    @PostMapping("/verify-otp")
+    public String verifyOtp(@RequestParam String code, RedirectAttributes redirectAttributes) {
+        Account account = verificationCodeService.verifyCode(code);
+
+        if (account != null) {
+            redirectAttributes.addFlashAttribute("success", "Xác thực thành công! Bạn có thể đăng nhập ngay.");
+            return "redirect:/user-login";
+        } else {
+            redirectAttributes.addFlashAttribute("errorMessage", "Mã OTP không hợp lệ hoặc đã hết hạn!");
+            return "redirect:/verify-otp";
+        }
+    }
+    @PostMapping("/resend-otp")
+    public String resendOtp(@RequestParam String email, RedirectAttributes redirectAttributes) {
+        try {
+            verificationCodeService.createVerificationCode(email);
+            redirectAttributes.addFlashAttribute("success", "Mã OTP mới đã được gửi đến " + email);
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Không thể gửi lại OTP: " + e.getMessage());
+        }
+        redirectAttributes.addFlashAttribute("email", email);
+        return "redirect:/verify-otp";
     }
 }

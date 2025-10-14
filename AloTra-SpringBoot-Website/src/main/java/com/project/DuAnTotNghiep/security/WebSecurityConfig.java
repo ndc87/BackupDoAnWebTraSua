@@ -52,7 +52,7 @@ public class WebSecurityConfig {
 			http.csrf().disable().authorizeRequests()
 					// ⚙️ Cho phép truy cập tài nguyên tĩnh (CSS, JS, images, ...)
 					.antMatchers("/css/**", "/js/**", "/images/**", "/vendor/**", "/plugins/**", "/webjars/**",
-							"/favicon.ico", "/error")
+							"/favicon.ico", "/error", "/admin/assets/**", "/admin/vendors/**", "/vendors/**", "/assets/**")
 					.permitAll()
 
 					// 🟢 Guest (public pages)
@@ -68,8 +68,17 @@ public class WebSecurityConfig {
 							"/revenue/**")
 					.hasAnyRole("VENDOR", "ADMIN")
 
-					// 🔴 Admin
-					.antMatchers("/admin/**", "/management/**", "/system/**").hasRole("ADMIN")
+					// 🟣 Vendor & Admin - Trang thống kê và các chức năng quản lý sản phẩm, đơn hàng
+					.antMatchers("/admin/thong-ke-doanh-thu", "/admin/thong-ke-san-pham", "/admin/product-all", 
+							"/admin/color-list", "/admin/category-all", "/admin/material-all", "/admin/size-all", 
+							"/admin/brand-all", "/admin/bill-list", "/admin/pos", "/api/get-statistic-revenue-**")
+					.hasAnyRole("VENDOR", "ADMIN")
+
+					// 🔴 Admin only
+					.antMatchers("/admin-only/**", "/management/**", "/system/**").hasRole("ADMIN")
+
+					// 🔴 Admin - Các trang quản trị khác
+					.antMatchers("/admin/**").hasRole("ADMIN")
 
 					// Các request khác thì cho phép (để login form không bị chặn)
 					.anyRequest().permitAll()
@@ -112,7 +121,8 @@ public class WebSecurityConfig {
 	@Bean
 	public WebSecurityCustomizer webSecurityCustomizer() {
 		return (web) -> web.ignoring().antMatchers("/img/**", "/js/**", "/css/**", "/fonts/**", "/plugins/**",
-				"/vendor/**", "/static/**", "/webjars/**", "/images/**", "/favicon.ico", "/error");
+				"/vendor/**", "/static/**", "/webjars/**", "/images/**", "/favicon.ico", "/error",
+				"/admin/assets/**", "/admin/vendors/**", "/vendors/**", "/assets/**");
 	}
 }
 }

@@ -16,6 +16,16 @@ public class MvcConfig implements WebMvcConfigurer {
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         exposeDirectory("uploads", registry);
         exposeDirectory("upload-barcode", registry);
+        
+        // Cấu hình mapping cho static resources trong thư mục admin
+        registry.addResourceHandler("/admin/assets/**")
+                .addResourceLocations("classpath:/static/admin/assets/");
+        registry.addResourceHandler("/admin/vendors/**")
+                .addResourceLocations("classpath:/static/admin/vendors/");
+        registry.addResourceHandler("/vendors/**")
+                .addResourceLocations("classpath:/static/vendor/");
+        registry.addResourceHandler("/assets/**")
+                .addResourceLocations("classpath:/static/assets/");
     }
     @Override
     public void addCorsMappings(CorsRegistry registry) {

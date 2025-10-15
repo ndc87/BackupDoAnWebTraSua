@@ -26,12 +26,9 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 @Controller
-//@RestController
 @RequestMapping("/admin")
 public class ProductController {
 
-    @Value("${upload.directory}")
-    private String uploadDirectory; // Đường dẫn đến thư mục lưu ảnh, được cấu hình trong application.properties
     @Autowired
     private ProductService productService;
 
@@ -57,8 +54,9 @@ public class ProductController {
     private ImageService imageService;
 
     @Autowired
-    FileUploadUtil fileUploadUtil;
+    private CloudinaryService cloudinaryService;
 
+    // Các phương thức khác giữ nguyên...
 
     @GetMapping("/product-all")
     public String getAllProduct(Model model, @RequestParam(name = "page", defaultValue = "0") int page,
@@ -104,8 +102,6 @@ public class ProductController {
     @GetMapping("/product-create")
     public String viewAddProduct(Model model, HttpSession session) {
         Product product = new Product();
-
-
         model.addAttribute("action", "/admin/product-create/save-part1");
         model.addAttribute("product", product);
         return "admin/product-create";
@@ -131,14 +127,13 @@ public class ProductController {
 
         Product part1Data = (Product) session.getAttribute("createProductPart1" + randomCreateKey);
         if (part1Data == null) {
-            // Nếu dữ liệu phần 1 không tồn tại, điều hướng người dùng trở lại phần 1
             return "redirect:/admin/product-create";
         }
 
         CreateProductDetailsForm createProductDetailsForm = new CreateProductDetailsForm();
         List<ProductDetail> productDetails = new ArrayList<>();
         productDetails.add(new ProductDetail());
-            createProductDetailsForm.setProductDetailList(productDetails);
+        createProductDetailsForm.setProductDetailList(productDetails);
         model.addAttribute("form", createProductDetailsForm);
         return "/admin/product-create-detail";
     }
@@ -146,12 +141,11 @@ public class ProductController {
     @PostMapping("/product-save")
     @Transactional(rollbackOn = Exception.class)
     public String handlePart2(@ModelAttribute("form") CreateProductDetailsForm form, HttpSession session, @RequestParam("files") List<MultipartFile> files, RedirectAttributes redirectAttributes) throws IOException {
-        // Kiểm tra xem dữ liệu từ phần 1 đã tồn tại trong session hay chưa
         String randomCreateKey = (String) session.getAttribute("randomCreateKey");
         Product part1Data = (Product) session.getAttribute("createProductPart1" + randomCreateKey);
         if (part1Data == null) {
             // Nếu dữ liệu phần 1 không tồn tại, điều hướng người dùng trở lại phần 1
-//            return "redirect:/admin/product-create";
+            // return "redirect:/admin/product-create";
         } else  {
             List<ProductDetail> productDetails = form.getProductDetailList();
             for (ProductDetail productDetail : productDetails) {
@@ -161,9 +155,8 @@ public class ProductController {
             List<Image> images = new ArrayList<>();
             if (!files.isEmpty()) {
                 for (MultipartFile file : files) {
-                    String fileName = StringUtils.cleanPath(Objects.requireNonNull(file.getOriginalFilename()));
-                    String fileNameAfter = FileUploadUtil.saveFile(uploadDirectory, fileName, file);
-                    images.add(new Image(null, fileNameAfter, LocalDateTime.now(), LocalDateTime.now(), "uploads/"+fileNameAfter, file.getContentType(), part1Data));
+                    String imageUrl = cloudinaryService.uploadImage(file);
+                    images.add(new Image(null, null, LocalDateTime.now(), LocalDateTime.now(), imageUrl, file.getContentType(), part1Data));
                 }
             }
             part1Data.setImage(images);
@@ -174,7 +167,7 @@ public class ProductController {
         session.removeAttribute("createProductPart1" + randomCreateKey);
 
         redirectAttributes.addFlashAttribute("successMessage", "Thêm sản phẩm " + part1Data.getCode() + " thành công");
-        return "redirect:/admin/product-all"; // Trả về trang thành công
+        return "redirect:/admin/product-all";
     }
 
     @GetMapping("/product-edit/{productCode}")
@@ -204,7 +197,6 @@ public class ProductController {
 
         Product part1Data = (Product) session.getAttribute("editProductPart1" + randomUpdateKey);
         if (part1Data == null) {
-            // Nếu dữ liệu phần 1 không tồn tại, điều hướng người dùng trở lại phần 1
             return "redirect:/admin/product-all";
         }
 
@@ -228,7 +220,6 @@ public class ProductController {
 
         Product part1Data = (Product) session.getAttribute("editProductPart1" + randomUpdateKey);
         if (part1Data == null) {
-            // Nếu dữ liệu phần 1 không tồn tại, điều hướng người dùng trở lại phần 1
             return "redirect:/admin/product-all";
         } else  {
             List<ProductDetail> productDetails = form.getProductDetailList();
@@ -238,22 +229,17 @@ public class ProductController {
             part1Data.setProductDetails(productDetails);
             List<Image> images = new ArrayList<>();
             List<Image> beforeImages = imageService.getAllImagesByProductId(part1Data.getId());
-            for (Image image: beforeImages
-                 ) {
-                if(!imageRemoveIds.contains(image.getId())) {
+            for (Image image: beforeImages) {
+                if(imageRemoveIds == null || !imageRemoveIds.contains(image.getId())) {
                     images.add(image);
-                }else {
-                    FileUploadUtil.deleteFile(image.getLink());
                 }
+                // Nếu muốn xóa ảnh trên Cloudinary thì cần thêm xử lý gọi API xóa ở đây
             }
 
-            if(files != null) {
-                if (!files.isEmpty() ) {
-                    for (MultipartFile file : files) {
-                        String fileName = StringUtils.cleanPath(Objects.requireNonNull(file.getOriginalFilename()));
-                        String fileNameAfter = FileUploadUtil.saveFile(uploadDirectory, fileName, file);
-                        images.add(new Image(null, fileNameAfter, LocalDateTime.now(), LocalDateTime.now(), "uploads/"+fileNameAfter, file.getContentType(),     part1Data));
-                    }
+            if(files != null && !files.isEmpty()) {
+                for (MultipartFile file : files) {
+                    String imageUrl = cloudinaryService.uploadImage(file);
+                    images.add(new Image(null, null, LocalDateTime.now(), LocalDateTime.now(), imageUrl, file.getContentType(), part1Data));
                 }
             }
             imageService.removeImageByIds(imageRemoveIds);
@@ -277,8 +263,6 @@ public class ProductController {
     public List<Color> getColor() {
         return colorService.findAll();
     }
-
-
 
     @ModelAttribute("listBrand")
     public List<Brand> getBrand() {
@@ -306,6 +290,4 @@ public class ProductController {
 
         return "redirect:/admin/product-all";
     }
-
-
 }

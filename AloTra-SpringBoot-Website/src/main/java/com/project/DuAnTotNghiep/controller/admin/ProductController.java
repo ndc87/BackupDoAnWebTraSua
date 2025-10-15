@@ -280,14 +280,13 @@ public class ProductController {
     }
 
     @GetMapping("/product-delete/{id}")
-    public String delete(@PathVariable("id") Long id, RedirectAttributes redirectAttributes, Model model) {
-        try{
+    public String delete(@PathVariable("id") Long id, RedirectAttributes redirectAttributes) {
+        try {
             Product product = productService.delete(id);
-            model.addAttribute("successMessage", "Sản phẩm có mã " + product.getCode() + " đã xóa thành công");
-        }catch (Exception e) {
-            model.addAttribute("errorMessage", e.getMessage());
+            redirectAttributes.addFlashAttribute("successMessage", "Sản phẩm có mã " + product.getCode() + " đã xóa thành công");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
-
         return "redirect:/admin/product-all";
     }
 }

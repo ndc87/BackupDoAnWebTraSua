@@ -53,6 +53,7 @@ public class WebSecurityConfig {
                         "/admin/size-all", "/admin/size-create", "/admin/size-detail/**",
                         "/admin/color-list", "/admin/color-create", "/admin/edit-color/**",
                         "/admin/pos",
+                        "/admin/generate-pdf/**",
                         "/admin-only/bill-return",
                         "/admin-only/bill-return-create",
                         "/admin-only/bill-return-detail/**",

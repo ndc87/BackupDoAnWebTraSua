@@ -665,11 +665,11 @@
 							</div>
 							<div class="block2-pic hov-img0 label-new" data-label="New"
 								style="height: 340px">
-								<img th:src="@{'/' + ${product.imageUrl}}" alt="IMG-PRODUCT"
-									style="height: 100%; width: 100%"> <a
-									th:href="@{product-detail/{id} (id = ${product.code})}"
-									class="block2-btn flex-c-m stext-103 cl2 size-102 bg0 bor2 hov-btn1 p-lr-15 trans-04 ">
-									Chi Tiết </a>
+								<img th:src="${#strings.startsWith(product.imageUrl, 'http') ? product.imageUrl : '/' + product.imageUrl}" alt="IMG-PRODUCT"
+				style="height: 100%; width: 100%"> <a
+				th:href="@{product-detail/{id} (id = ${product.code})}"
+				class="block2-btn flex-c-m stext-103 cl2 size-102 bg0 bor2 hov-btn1 p-lr-15 trans-04 ">
+				Chi Tiết </a>
 							</div>
 							<div class="block2-txt flex-w flex-t p-t-14">
 								<div class="block2-txt-child1 flex-col-l ">

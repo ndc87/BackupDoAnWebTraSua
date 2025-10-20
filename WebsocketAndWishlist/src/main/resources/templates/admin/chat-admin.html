@@ -89,6 +89,7 @@
 let stompClient = null;
 let selectedUser = null;
 let users = new Set();
+let messageHistory = new Map(); // ✅ Lưu tin nhắn của từng user
 
 function connectAdmin() {
   if (typeof SockJS === "undefined") {
@@ -104,7 +105,6 @@ function connectAdmin() {
 
     stompClient.subscribe("/topic/public", (msg) => {
       const data = JSON.parse(msg.body);
-      console.log("📩 Broadcast:", data);
       if (data.from && data.from !== "admin") {
         users.add(data.from);
         updateUserList();
@@ -114,7 +114,6 @@ function connectAdmin() {
 
     stompClient.subscribe("/user/queue/messages", (msg) => {
       const data = JSON.parse(msg.body);
-      console.log("📬 Private message:", data);
       if (data.from && !users.has(data.from)) {
         users.add(data.from);
         updateUserList();
@@ -139,16 +138,37 @@ function updateUserList() {
 function selectUser(user) {
   selectedUser = user;
   updateUserList();
-  document.getElementById("chatMessages").innerHTML = "";
+  renderMessageHistory(user); // ✅ Hiển thị lại tin cũ
+}
+
+function renderMessageHistory(user) {
+  const msgBox = document.getElementById("chatMessages");
+  msgBox.innerHTML = "";
+  const messages = messageHistory.get(user) || [];
+  messages.forEach(m => {
+    const div = document.createElement("div");
+    div.classList.add("chat-message", m.from === "admin" ? "admin" : "user");
+    div.innerHTML = `<div class="bubble">${m.from}: ${m.content}</div>`;
+    msgBox.appendChild(div);
+  });
+  msgBox.scrollTop = msgBox.scrollHeight;
 }
 
 function showMessage(from, content) {
-  const msgBox = document.getElementById("chatMessages");
-  const div = document.createElement("div");
-  div.classList.add("chat-message", from === "admin" ? "admin" : "user");
-  div.innerHTML = `<div class="bubble">${from}: ${content}</div>`;
-  msgBox.appendChild(div);
-  msgBox.scrollTop = msgBox.scrollHeight;
+  // ✅ Lưu tin nhắn theo người
+  const target = (from === "admin") ? selectedUser : from;
+  if (!messageHistory.has(target)) messageHistory.set(target, []);
+  messageHistory.get(target).push({ from, content });
+
+  // Nếu đang xem đúng người, hiển thị luôn
+  if (target === selectedUser) {
+    const msgBox = document.getElementById("chatMessages");
+    const div = document.createElement("div");
+    div.classList.add("chat-message", from === "admin" ? "admin" : "user");
+    div.innerHTML = `<div class="bubble">${from}: ${content}</div>`;
+    msgBox.appendChild(div);
+    msgBox.scrollTop = msgBox.scrollHeight;
+  }
 }
 
 document.getElementById("sendBtn").addEventListener("click", () => {
@@ -168,5 +188,6 @@ document.getElementById("sendBtn").addEventListener("click", () => {
 
 connectAdmin();
 </script>
+
 </body>
 </html>

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trò chuyện trực tuyến</title>
+
+ <script src="/js/sockjs.min.js"></script>
+<script src="/js/stomp.min.js"></script>
+
+  <style>
+    body {
+      background-color: #f0f2f5;
+      font-family: "Segoe UI", sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .chat-container {
+      width: 420px;
+      height: 600px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .chat-header {
+      background-color: #0084ff;
+      color: white;
+      padding: 14px;
+      font-weight: bold;
+      text-align: center;
+      font-size: 18px;
+    }
+
+    .chat-messages {
+      flex: 1;
+      padding: 12px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .message {
+      max-width: 75%;
+      padding: 10px 14px;
+      border-radius: 18px;
+      line-height: 1.4;
+      word-wrap: break-word;
+      font-size: 15px;
+    }
+
+    .sent {
+      align-self: flex-end;
+      background-color: #0084ff;
+      color: white;
+      border-bottom-right-radius: 4px;
+    }
+
+    .received {
+      align-self: flex-start;
+      background-color: #e4e6eb;
+      color: #050505;
+      border-bottom-left-radius: 4px;
+    }
+
+    .chat-input {
+      display: flex;
+      padding: 10px;
+      background: #f7f7f7;
+      border-top: 1px solid #ddd;
+    }
+
+    .chat-input input {
+      flex: 1;
+      border: none;
+      outline: none;
+      padding: 10px;
+      border-radius: 20px;
+      background: white;
+      font-size: 14px;
+    }
+
+    .chat-input button {
+      background: #0084ff;
+      border: none;
+      color: white;
+      font-weight: bold;
+      padding: 10px 16px;
+      border-radius: 50%;
+      margin-left: 8px;
+      cursor: pointer;
+    }
+
+    .chat-input button:hover {
+      background: #0072e5;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="chat-container">
+    <div class="chat-header">💬 Trò chuyện trực tuyến</div>
+
+    <div class="chat-messages" id="messages"></div>
+
+    <div class="chat-input">
+      <input id="message" type="text" placeholder="Nhập tin nhắn..."
+             onkeypress="if(event.key==='Enter'){sendMessage();}">
+      <button onclick="sendMessage()">➤</button>
+    </div>
+  </div>
+
+  <script>
+    var stompClient = null;
+    var username = "User" + Math.floor(Math.random() * 1000);
+
+    function connectChat() {
+      if (typeof SockJS === "undefined") {
+        alert("❌ SockJS chưa được tải. Vui lòng refresh (Ctrl + Shift + R).");
+        return;
+      }
+
+      var socket = new SockJS('/ws');
+      stompClient = Stomp.over(socket);
+
+      stompClient.connect({}, function (frame) {
+        console.log('✅ Connected:', frame);
+
+        // Nhận tin nhắn broadcast từ server
+        stompClient.subscribe('/topic/public', function (messageOutput) {
+          var msg = JSON.parse(messageOutput.body);
+          console.log("📩 Nhận broadcast:", msg);
+          showMessage(msg);
+        });
+
+        // Nhận tin nhắn riêng từ admin
+        stompClient.subscribe('/user/queue/messages', function (messageOutput) {
+          var msg = JSON.parse(messageOutput.body);
+          console.log("📬 Nhận tin riêng từ admin:", msg);
+          showMessage(msg);
+        });
+
+        // Thông báo user join
+        stompClient.send("/app/chat.send", {}, JSON.stringify({
+          from: username,
+          content: username + " đã tham gia cuộc trò chuyện"
+        }));
+      });
+    }
+
+    function sendMessage() {
+      var messageContent = document.getElementById("message").value.trim();
+      if (messageContent && stompClient) {
+        var chatMessage = {
+          from: username,
+          content: messageContent
+        };
+        stompClient.send("/app/chat.send", {}, JSON.stringify(chatMessage));
+        showMessage(chatMessage);
+        document.getElementById("message").value = "";
+      }
+    }
+
+    function showMessage(message) {
+      var container = document.getElementById("messages");
+      var div = document.createElement("div");
+      div.classList.add("message");
+
+      if (message.from === username || message.from === "admin") {
+        div.classList.add("sent");
+      } else {
+        div.classList.add("received");
+      }
+
+      div.textContent = message.from + ": " + message.content;
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    connectChat();
+  </script>
+</body>
+</html>

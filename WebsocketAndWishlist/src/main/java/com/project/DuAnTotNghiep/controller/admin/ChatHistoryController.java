@@ -3,6 +3,8 @@ package com.project.DuAnTotNghiep.controller.admin;
 import com.project.DuAnTotNghiep.entity.ChatMessageEntity;
 import com.project.DuAnTotNghiep.repository.ChatMessageRepository;
 import lombok.Data;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -13,12 +15,11 @@ import java.util.stream.Collectors;
 @RestController
 public class ChatHistoryController {
 
-    private final ChatMessageRepository chatRepo;
-    private static final String ADMIN_EMAIL = "admin@gmail.com";
+    // ✅ Tiêm repository đúng chuẩn (sửa lỗi cannot be resolved)
+    @Autowired
+    private ChatMessageRepository chatMessageRepository;
 
-    public ChatHistoryController(ChatMessageRepository chatRepo) {
-        this.chatRepo = chatRepo;
-    }
+    private static final String ADMIN_EMAIL = "admin@gmail.com";
 
     /**
      * ✅ API: Lấy lịch sử chat giữa admin và 1 user cụ thể
@@ -29,12 +30,22 @@ public class ChatHistoryController {
         String roomId = buildRoomId(userEmail, ADMIN_EMAIL);
 
         // Lấy toàn bộ tin nhắn theo roomId, sắp xếp tăng dần
-        List<ChatMessageEntity> messages = chatRepo.findByRoomIdOrderByCreatedAtAsc(roomId);
+        List<ChatMessageEntity> messages = chatMessageRepository.findByRoomIdOrderByCreatedAtAsc(roomId);
 
         // Chuyển sang DTO gọn cho frontend
         return messages.stream()
                 .map(m -> new MessageDTO(m.getSender(), m.getContent()))
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * ✅ API: Lấy danh sách tất cả user đã chat với admin
+     * Endpoint: /admin/api/chat/users
+     */
+    @GetMapping("/admin/api/chat/users")
+    public ResponseEntity<List<String>> getAllChatUsers() {
+        List<String> users = chatMessageRepository.findDistinctSendersExcludingAdmin();
+        return ResponseEntity.ok(users);
     }
 
     /**

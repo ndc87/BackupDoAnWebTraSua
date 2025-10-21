@@ -223,7 +223,7 @@ body {
         messages.forEach(m => {
           const div = document.createElement("div");
           div.className = "chat-message " + (m.sender === "admin@gmail.com" ? "admin" : "user");
-          div.innerHTML = `<div class="bubble">${m.sender}: ${m.content}</div>`;
+          div.innerHTML = `<div class="bubble">${m.content}</div>`;
           container.appendChild(div);
         });
 
@@ -235,16 +235,19 @@ body {
       });
   }
 
-  // Hiển thị tin nhắn (từ realtime)
+//Hiển thị tin nhắn (từ realtime)
   function showMessage(from, content) {
     const msgBox = document.getElementById("chatMessages");
     const div = document.createElement("div");
+
     div.classList.add("chat-message", from === "admin@gmail.com" ? "admin" : "user");
-    div.innerHTML = `<div class="bubble">${from}: ${content}</div>`;
+
+    // ✅ Bỏ phần email, chỉ hiển thị nội dung
+    div.innerHTML = `<div class="bubble">${content}</div>`;
+
     msgBox.appendChild(div);
     msgBox.scrollTop = msgBox.scrollHeight;
   }
-
   // Gửi tin nhắn từ admin → user
   document.getElementById("sendBtn").addEventListener("click", () => {
     const input = document.getElementById("messageInput");

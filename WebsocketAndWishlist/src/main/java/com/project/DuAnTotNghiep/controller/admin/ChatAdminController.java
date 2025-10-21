@@ -18,7 +18,8 @@ public class ChatAdminController {
     @GetMapping("/admin/chat")
     public String chatPage(Model model) {
         // ✅ Lấy toàn bộ tin nhắn, sắp xếp theo thời gian tăng dần
-        List<ChatMessageEntity> messages = chatRepo.findAllOrderByCreateDateAsc();
+        List<ChatMessageEntity> messages = chatRepo.findAllByOrderByCreateDateAsc();
+
         model.addAttribute("messages", messages);
 
         return "admin/chat-admin";

@@ -119,7 +119,8 @@
 
   <script>
     var stompClient = null;
-    var username = "User" + Math.floor(Math.random() * 1000);
+    // ✅ Use a more persistent username (could be from session/login)
+    var username = "user" + Math.floor(Math.random() * 1000) + "@example.com";
 
     function connectChat() {
       if (typeof SockJS === "undefined") {
@@ -137,19 +138,22 @@
         stompClient.subscribe('/topic/public', function (messageOutput) {
           var msg = JSON.parse(messageOutput.body);
           console.log("📩 Nhận broadcast:", msg);
-          showMessage(msg);
+          if (msg.from !== username) {
+            showMessage(msg);
+          }
         });
 
-        // Nhận tin nhắn riêng từ admin
+        // ✅ Nhận tin nhắn riêng từ admin
         stompClient.subscribe('/user/queue/messages', function (messageOutput) {
           var msg = JSON.parse(messageOutput.body);
           console.log("📬 Nhận tin riêng từ admin:", msg);
           showMessage(msg);
         });
 
-        // Thông báo user join
+        // ✅ Thông báo user join - gửi đến admin
         stompClient.send("/app/chat.send", {}, JSON.stringify({
           from: username,
+          to: "admin@gmail.com",
           content: username + " đã tham gia cuộc trò chuyện"
         }));
       });
@@ -160,10 +164,13 @@
       if (messageContent && stompClient) {
         var chatMessage = {
           from: username,
+          to: "admin@gmail.com", // ✅ Gửi trực tiếp đến admin
           content: messageContent
         };
         stompClient.send("/app/chat.send", {}, JSON.stringify(chatMessage));
-        showMessage(chatMessage);
+        
+        // ✅ Hiển thị tin nhắn của mình
+        showMessage({from: username, content: messageContent});
         document.getElementById("message").value = "";
       }
     }
@@ -173,13 +180,21 @@
       var div = document.createElement("div");
       div.classList.add("message");
 
-      if (message.from === username || message.from === "admin") {
+      // ✅ Cải thiện logic hiển thị
+      if (message.from === username) {
         div.classList.add("sent");
+      } else if (message.from === "admin@gmail.com") {
+        div.classList.add("received");
+        div.textContent = "Admin: " + message.content;
       } else {
         div.classList.add("received");
+        div.textContent = message.from + ": " + message.content;
       }
 
-      div.textContent = message.from + ": " + message.content;
+      if (message.from === username) {
+        div.textContent = "Bạn: " + message.content;
+      }
+
       container.appendChild(div);
       container.scrollTop = container.scrollHeight;
     }

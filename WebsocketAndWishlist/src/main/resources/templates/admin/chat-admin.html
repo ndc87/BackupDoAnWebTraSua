@@ -1,91 +1,112 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
-  <meta charset="UTF-8">
-  <title>💬 Chat hỗ trợ khách hàng</title>
-  <link rel="stylesheet" th:href="@{/vendor/bootstrap/css/bootstrap.min.css}">
-  <script th:src="@{/js/sockjs.min.js}"></script>
+<meta charset="UTF-8">
+<title>💬 Chat hỗ trợ khách hàng</title>
+<link rel="stylesheet"
+	th:href="@{/vendor/bootstrap/css/bootstrap.min.css}">
+<script th:src="@{/js/sockjs.min.js}"></script>
 <script th:src="@{/js/stomp.min.js}"></script>
-  <style>
-    body {
-      background: #f5f6fa;
-      font-family: 'Poppins', sans-serif;
-    }
-    .chat-container {
-      display: flex;
-      height: 90vh;
-      margin: 20px;
-      border-radius: 10px;
-      overflow: hidden;
-      box-shadow: 0 0 10px rgba(0,0,0,0.2);
-      background: white;
-    }
-    .chat-users {
-      width: 25%;
-      border-right: 1px solid #ccc;
-      overflow-y: auto;
-    }
-    .chat-users h5 {
-      padding: 15px;
-      background: #007bff;
-      color: white;
-      margin: 0;
-    }
-    .chat-users li {
-      padding: 10px 15px;
-      cursor: pointer;
-      border-bottom: 1px solid #eee;
-    }
-    .chat-users li.active {
-      background: #e9ecef;
-    }
-    .chat-box {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-    }
-    .chat-messages {
-      flex: 1;
-      padding: 15px;
-      overflow-y: auto;
-    }
-    .chat-message {
-      margin-bottom: 10px;
-    }
-    .chat-message.admin {
-      text-align: right;
-    }
-    .bubble {
-      display: inline-block;
-      padding: 8px 12px;
-      border-radius: 10px;
-      max-width: 70%;
-    }
-    .chat-message.user .bubble {
-      background: #e9ecef;
-    }
-    .chat-message.admin .bubble {
-      background: #007bff;
-      color: white;
-    }
-  </style>
+<style>
+body {
+	background: #f5f6fa;
+	font-family: 'Poppins', sans-serif;
+}
+
+.chat-container {
+	display: flex;
+	height: 90vh;
+	margin: 20px;
+	border-radius: 10px;
+	overflow: hidden;
+	box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+	background: white;
+}
+
+.chat-users {
+	width: 25%;
+	border-right: 1px solid #ccc;
+	overflow-y: auto;
+}
+
+.chat-users h5 {
+	padding: 15px;
+	background: #007bff;
+	color: white;
+	margin: 0;
+}
+
+.chat-users li {
+	padding: 10px 15px;
+	cursor: pointer;
+	border-bottom: 1px solid #eee;
+}
+
+.chat-users li.active {
+	background: #e9ecef;
+}
+
+.chat-box {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+}
+
+.chat-messages {
+	flex: 1;
+	padding: 15px;
+	overflow-y: auto;
+}
+
+.chat-message {
+	margin-bottom: 10px;
+}
+
+.chat-message.admin {
+	text-align: right;
+}
+
+.bubble {
+	display: inline-block;
+	padding: 8px 12px;
+	border-radius: 10px;
+	max-width: 70%;
+}
+
+.chat-message.user .bubble {
+	background: #e9ecef;
+}
+
+.chat-message.admin .bubble {
+	background: #007bff;
+	color: white;
+}
+</style>
 </head>
 <body>
-<div class="chat-container">
-  <div class="chat-users">
-    <h5>👥 Người dùng</h5>
-    <ul id="userList"></ul>
-  </div>
-  <div class="chat-box">
-    <div id="chatMessages" class="chat-messages"></div>
-    <div class="chat-input">
-      <input type="text" id="messageInput" placeholder="Nhập tin nhắn..." style="flex:1;border:none;padding:10px;">
-      <button id="sendBtn" style="background:#007bff;color:white;border:none;padding:0 15px;">Gửi ➤</button>
-    </div>
-  </div>
-</div>
+	<div class="chat-container">
+		<div class="chat-users">
+			<h5>👥 Người dùng</h5>
+			<ul id="userList"></ul>
+		</div>
+		<div class="chat-box">
+			<div id="chatMessages" class="chat-messages">
+				<div th:each="m : ${messages}"
+					th:classappend="${m.sender} == 'admin@gmail.com' ? 'chat-message admin' : 'chat-message user'">
+					<div class="bubble" th:text="${m.sender + ': ' + m.content}"></div>
+				</div>
+			</div>
+			<div class="chat-input">
+				<input type="text" id="messageInput" placeholder="Nhập tin nhắn..."
+					style="flex: 1; border: none; padding: 10px;">
+				<button id="sendBtn"
+					style="background: #007bff; color: white; border: none; padding: 0 15px;">Gửi
+					➤</button>
+			</div>
+		</div>
+	</div>
 
-<script>
+	<script>
 let stompClient = null;
 let selectedUser = null;
 let users = new Set();

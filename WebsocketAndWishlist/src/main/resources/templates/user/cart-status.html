@@ -98,8 +98,8 @@
                     <td>
                         <form method="POST" th:action="'/cancel-bill/' + ${bill.id}" class="form-cancel-order">
                             <button type="submit" class="btn btn-danger" id="cancel-bill" th:if="${
-                                    bill.status == T(com.project.DuAnTotNghiep.entity.enumClass.BillStatus).CHO_XAC_NHAN ||
-                                     bill.status == T(com.project.DuAnTotNghiep.entity.enumClass.BillStatus).CHO_LAY_HANG }"
+                                    bill.status != null && (bill.status.name() == 'CHO_XAC_NHAN' ||
+                                    bill.status.name() == 'CHO_LAY_HANG') }"
                             >
 
                                 Hủy đơn

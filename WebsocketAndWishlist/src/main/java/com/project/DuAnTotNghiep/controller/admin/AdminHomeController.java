@@ -35,7 +35,7 @@ public class  AdminHomeController {
         Page<BillDtoInterface> billDtos = billService.findAll(Pageable.ofSize(10));
         Page<ProductDto> productDtos = productService.getAllProductApi(Pageable.ofSize(10));
 
-        model.addAttribute("billList", billRepository.findAll(PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "createDate"))));
+        model.addAttribute("billList", billRepository.findAll(PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "create_date"))));
         model.addAttribute("totalBillQuantity", billDtos.getTotalElements());
         model.addAttribute("totalProduct", productDtos.getTotalElements());
         model.addAttribute("revenue", billRepository.calculateTotalRevenue());

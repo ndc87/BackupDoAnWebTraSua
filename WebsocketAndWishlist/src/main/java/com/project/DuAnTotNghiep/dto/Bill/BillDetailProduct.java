@@ -2,21 +2,24 @@ package com.project.DuAnTotNghiep.dto.Bill;
 
 public interface BillDetailProduct {
 
-    Long getId();
-    Long getProductId();
+    Long getBillDetailId();
 
-    String getBillDetailId();
-
-    String getImageUrl();
     String getTenSanPham();
 
     String getTenMau();
 
     String getKichCo();
 
-    Double getGiaTien();
+    Double getGiaTien();     // ✅ đây là giá gốc trà sữa (moment_price)
 
-    int getSoLuong();
+    Integer getSoLuong();
+    
 
-    Double getTongTien();
+    Double getTongTopping(); // ✅ tổng topping của dòng, không cần đổi tên
+
+    Double getTongTien();    // ✅ moment_price * quantity
+
+    String getImageUrl();
+
+    Long getProductDetailId();
 }

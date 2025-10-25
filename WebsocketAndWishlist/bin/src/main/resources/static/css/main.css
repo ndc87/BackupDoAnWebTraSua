@@ -1939,15 +1939,15 @@ input.num-product::-webkit-inner-spin-button {
   font-size: 16px;
 }
 
-.table-shopping-cart .table_row {
+.table-shopping-cart .table-row {
   height: 185px;
 }
 
-.table-shopping-cart .table_row td {
+.table-shopping-cart .table-row td {
   padding-bottom: 20px;
 }
 
-.table-shopping-cart .table_row td.column-1 {
+.table-shopping-cart .table-row td.column-1 {
   padding-bottom: 30px;
 }
 

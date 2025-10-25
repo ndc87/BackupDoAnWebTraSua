@@ -98,22 +98,25 @@
 							</div>
 
 							<!-- Khi có sản phẩm trong giỏ hàng -->
-							<div class="wrap-table-shopping-cart" th:if="${carts != null and #lists.size(carts) > 0}">
+							<div class="wrap-table-shopping-cart"
+								th:if="${carts != null and #lists.size(carts) > 0}">
 								<table class="table-shopping-cart">
 									<tr class="table_head">
 										<th class="column-1">Hình ảnh</th>
 										<th class="column-2">Sản phẩm</th>
 										<th class="column-3">Giá</th>
 										<th class="column-4">Size</th>
-										<th class="column-5">Màu sắc</th>
+										<th class="column-5">Lượng đường</th>
 										<th class="column-6">Số lượng</th>
 										<th class="column-7">Tổng</th>
 									</tr>
 
 									<tr class="table-row product-item" th:each="cart : ${carts}">
 										<input type="hidden" th:value="${cart.id}" class="cartId">
-										<input type="hidden" th:value="${cart.detail != null ? cart.detail.id : ''}" class="detailId">
-										
+										<input type="hidden"
+											th:value="${cart.detail != null ? cart.detail.id : ''}"
+											class="detailId">
+
 										<!-- Hình ảnh -->
 										<td class="column-1">
 											<div class="how-itemcart1 ml-2">
@@ -125,23 +128,21 @@
 										<td class="column-2" th:text="${cart.product.name}"></td>
 
 										<!-- Giá -->
-										<td class="column-3">
-											<span class="product-old-price"
-												th:if="${cart.detail != null and cart.detail.discountedPrice != null}"
-												th:text="${#numbers.formatDecimal(cart.detail.price, 0, 'POINT', 0, 'COMMA')}"
-												style="text-decoration: line-through; font-size: 12px"></span>
-											
+										<td class="column-3"><span class="product-old-price"
+											th:if="${cart.detail != null and cart.detail.discountedPrice != null}"
+											th:text="${#numbers.formatDecimal(cart.detail.price, 0, 'POINT', 0, 'COMMA')}"
+											style="text-decoration: line-through; font-size: 12px"></span>
+
 											<span class="product-price"
-												th:if="${cart.detail != null and cart.detail.discountedPrice != null}"
-												th:text="${#numbers.formatDecimal(cart.detail.discountedPrice, 0, 'POINT', 0, 'COMMA')}"></span>
-											
+											th:if="${cart.detail != null and cart.detail.discountedPrice != null}"
+											th:text="${#numbers.formatDecimal(cart.detail.discountedPrice, 0, 'POINT', 0, 'COMMA')}"></span>
+
 											<span class="product-price"
-												th:if="${cart.detail != null and cart.detail.discountedPrice == null}"
-												th:text="${#numbers.formatDecimal(cart.detail.price, 0, 'POINT', 0, 'COMMA')}"></span>
-											
-											<span class="product-price"
-												th:if="${cart.detail == null}"
-												th:text="${#numbers.formatDecimal(cart.product.price, 0, 'POINT', 0, 'COMMA')}"></span>
+											th:if="${cart.detail != null and cart.detail.discountedPrice == null}"
+											th:text="${#numbers.formatDecimal(cart.detail.price, 0, 'POINT', 0, 'COMMA')}"></span>
+
+											<span class="product-price" th:if="${cart.detail == null}"
+											th:text="${#numbers.formatDecimal(cart.product.price, 0, 'POINT', 0, 'COMMA')}"></span>
 										</td>
 
 										<!-- Size -->
@@ -155,7 +156,8 @@
 										<!-- Số lượng -->
 										<td class="column-6">
 											<div class="wrap-num-product flex-w m-l-auto m-r-0">
-												<div class="btn-num-product-down js-update-cart-down cl8 hov-btn3 trans-04 flex-c-m">
+												<div
+													class="btn-num-product-down js-update-cart-down cl8 hov-btn3 trans-04 flex-c-m">
 													<i class="fs-16 zmdi zmdi-minus"></i>
 												</div>
 
@@ -163,17 +165,34 @@
 													type="number" th:name="'num-product'+${cart.id}"
 													th:value="${cart.quantity}">
 
-												<div class="btn-num-product-up js-update-cart-up cl8 hov-btn3 trans-04 flex-c-m">
+												<div
+													class="btn-num-product-up js-update-cart-up cl8 hov-btn3 trans-04 flex-c-m">
 													<i class="fs-16 zmdi zmdi-plus"></i>
 												</div>
 											</div>
 										</td>
 
-										<!-- Tổng tiền -->
-										<td class="column-7 total-money"></td>
+
+										<!-- Cột tổng -->
+										<td class="column-7 text-right align-middle"
+											style="width: 100px; font-weight: 600;"><span
+											class="total-money text-dark">0 VND</span></td>
+										<!-- Cột topping -->
+										<td class="column-toppings align-top" style="width: 220px;">
+											<div
+												class="topping-container border rounded p-2 mt-2 bg-light"
+												th:attr="id=${'topping-selection-' + cart.detail.id}"
+												style="max-height: 150px; overflow-y: auto; font-size: 13px;">
+												<p class="text-muted text-center m-0 py-2">
+													<i class="fas fa-spinner fa-spin"></i> Đang tải topping...
+												</p>
+											</div>
+										</td>
 									</tr>
 								</table>
 							</div>
+
+
 
 							<!-- Chọn voucher -->
 							<div th:if="${carts != null and #lists.size(carts) > 0}">
@@ -228,7 +247,7 @@
 									</div>
 									<button type="button" class="bg2 size-102" id="add-address">Thêm
 										địa chỉ +</button>
-									
+
 									<div id="address-select-group" style="display: none">
 										<div class="bor8 bg0 m-b-12">
 											<input class="stext-111 cl8 plh3 size-111 p-lr-15"
@@ -324,8 +343,8 @@
 							trên web hoặc liên hệ trực tiếp tới cửa hàng</p>
 						<p>4. Phí gửi hàng lại do người mua trả</p>
 						<p>5. Mỗi hóa đơn chỉ được đổi trả 1 lần</p>
-						<p>6. Chỉ hỗ trợ đổi size, đổi % đường, đổi sản phẩm bằng
-							hoặc hơn giá</p>
+						<p>6. Chỉ hỗ trợ đổi size, đổi % đường, đổi sản phẩm bằng hoặc
+							hơn giá</p>
 						<p>7. Người mua đóng gói và gửi trả sản phẩm bao gồm toàn bộ
 							phụ kiện đi kèm, hóa đơn, tem phiếu Size (nếu có) và sản phẩm
 							phải trong tình trạng nguyên vẹn như khi nhận hàng.</p>
@@ -347,6 +366,55 @@
 				class="zmdi zmdi-chevron-up"></i>
 			</span>
 		</div>
+
+		<!-- ✅ CSS cho TOPPING -->
+		<style>
+.topping-item {
+	display: inline-flex;
+	align-items: center;
+	padding: 10px 15px;
+	margin: 5px;
+	border: 2px solid #dee2e6;
+	border-radius: 8px;
+	cursor: pointer;
+	transition: all 0.3s;
+	background: white;
+}
+
+.topping-item:hover {
+	border-color: #007bff;
+	transform: translateY(-2px);
+	box-shadow: 0 2px 5px rgba(0, 123, 255, 0.3);
+}
+
+.topping-item.selected {
+	border-color: #007bff;
+	background-color: #e7f3ff;
+}
+
+.topping-item input[type="checkbox"] {
+	margin-right: 10px;
+	width: 18px;
+	height: 18px;
+	cursor: pointer;
+}
+
+.topping-name {
+	font-weight: 500;
+	margin-right: 10px;
+}
+
+.topping-price {
+	color: #28a745;
+	font-weight: 600;
+}
+
+#topping-total-row {
+	background-color: #f8f9fa;
+	font-weight: 600;
+}
+</style>
+
 		<script
 			src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"
 			th:inline="javascript"></script>
@@ -355,6 +423,9 @@
         $(document).ready(function () {
             var voucherList = /*[[${discountCodes}]]*/ ''
             var voucherChoosed;
+            
+            // ✅ Load topping khi trang load
+            loadToppingsForCart();
 
             $('.how-itemcart1').on('click', function () {
                 var cartId = $(this).parent().parent().find('.cartId').val()
@@ -435,8 +506,7 @@
                                                <div id="shipping${data.id}">
                                                    <p>${data.address}</p>
                                                </div>
-                                           </div>
-                                       </div>`
+                                           </div>`
 
                             $('.address-list').append(content)
                             $(".shipping-choose").on('click', function () {
@@ -584,7 +654,7 @@
 
                 var row = $(this).closest('.table-row');
                 updateSubtotal(row);
-                calculateTotal();
+                updateTotalWithToppings(); // ✅ Gọi updateTotalWithToppings thay vì calculateTotal()
                 updateToServer(row, $(this).val())
 
                 $('#selected-voucher').html('')
@@ -620,7 +690,7 @@
 
 
                 updateSubtotal(row);
-                calculateTotal();
+                updateTotalWithToppings(); // ✅ Gọi updateTotalWithToppings thay vì calculateTotal()
                 updateToServer(row, row.find(".num-product").val())
             });
 
@@ -641,7 +711,7 @@
 
 
                 updateSubtotal(row);
-                calculateTotal();
+                updateTotalWithToppings(); // ✅ Gọi updateTotalWithToppings thay vì calculateTotal()
                 updateToServer(row, row.find(".num-product").val())
 
             });
@@ -698,49 +768,79 @@
             
             
             
-            // =============================HANDLE SUBMIT==============================
+         // =============================HANDLE SUBMIT==============================
             $("#submitBtn").on('click', async function () {
-                var voucherId = $("#selected-voucher").attr('data-selected')
-                var orderDetails = []
-                var promotion = removeAnyNonDigit($('#voucher-pic').text())
-                $(".product-item").each(function () {
+                const voucherId = $("#selected-voucher").attr('data-selected') || "";
+                const promotion = removeAnyNonDigit($('#voucher-pic').text()) || "0";
+                const paymentMethodId = $('input[name="paymentMethod"]:checked').val();
+                const selectedAddressElement = $('.shipping-choose.active p');
+
+                // ✅ kiểm tra địa chỉ trước khi tiếp tục
+                if (!selectedAddressElement.length || !selectedAddressElement.text().trim()) {
+                    swal("Thông báo", "Vui lòng chọn hoặc thêm địa chỉ giao hàng trước khi đặt hàng", "error");
+                    return;
+                }
+
+                // ✅ Chuẩn bị danh sách sản phẩm trong giỏ
+                const orderDetails = [];
+                $('.table-shopping-cart .table-row').each(function () {
+                    const productDetailId = $(this).find('.detailId').val();
+                    const quantity = parseInt($(this).find('.num-product').val(), 10);
+
+                    // ✅ Bỏ qua sản phẩm lỗi
+                    if (!productDetailId || isNaN(quantity) || quantity <= 0) return;
+
                     orderDetails.push({
-                        productDetailId: $(this).find(".detailId").val(),
-                        quantity: $(this).find(".num-product").val()
-                    })
-                })
+                        productDetailId: productDetailId,
+                        quantity: quantity,
+                        toppings: getSelectedToppingsForProduct(productDetailId) // ✅ gắn topping đúng từng sản phẩm
+                    });
+                });
 
-                if(orderDetails.length <= 0) {
-                    swal("Lỗi", "Giỏ hàng trống", "error")
+                // ✅ Kiểm tra giỏ hàng rỗng
+                if (orderDetails.length === 0) {
+                    swal("Lỗi", "Giỏ hàng trống", "error");
                     return;
                 }
 
-             // Kiểm tra địa chỉ - cho phép cả địa chỉ đã chọn hoặc địa chỉ vừa nhập
-                var selectedAddressElement = $('.shipping-choose.active p');
-                if (selectedAddressElement.length == 0 || selectedAddressElement.text().trim() == "") {
-                    swal("Thông báo", "Vui lòng chọn hoặc thêm địa chỉ giao hàng trước khi đặt hàng", "error")
-                    return;
-                }
-
-                var paymentMethodId = $('input[name="paymentMethod"]:checked').val();
-
+                // ✅ Dữ liệu gửi về backend
                 const dataSend = {
-                    paymentMethodId: $('input[name="paymentMethod"]:checked').val(),
-                    billingAddress: $('.shipping-choose.active p').text().trim(),
+                    paymentMethodId: paymentMethodId,
+                    billingAddress: selectedAddressElement.text().trim(),
                     promotionPrice: promotion,
                     voucherId: voucherId,
-                    orderDetailDtos: orderDetails
-                }
+                    orderDetailDtos: orderDetails // ✅ Không gửi toppings ở root nữa
+                };
+
+                // ==================== XỬ LÝ THANH TOÁN ====================
 
                 if(paymentMethodId == 3) {
+                    // ✅ CHUYỂN KHOẢN: Lưu đơn hàng tạm thời vào server session, sau đó redirect sang thanh toán
                     const amount = removeAnyNonDigit($('#all-total').text())
-                    // INIT PAYMENT
+                    console.log("💰 Tổng tiền hiển thị (frontend):", $('#all-total').text());
+    				console.log("💳 Số tiền gửi sang VNPay:", amount);
+                    // ✅ BƯỚC 1: Gửi dataSend lên server để lưu vào session
+                    $.ajax({
+                        type: 'POST',
+                        url: '/api/save-order-temp',
+                        data: JSON.stringify(dataSend),
+                        contentType: "application/json; charset=utf-8",
+                        async: false,
+                        success: function (data) {
+                            console.log("✅ Lưu đơn hàng tạm thời thành công");
+                        },
+                        error: function () {
+                            swal("Lỗi", "Không thể lưu đơn hàng tạm thời", "error");
+                            return false;
+                        }
+                    });
+                    
+                    // ✅ BƯỚC 2: Gọi API thanh toán
                     await $.ajax({
                         type: 'POST',
-                        dataTye: 'json',
+                        dataType: 'json',
                         url: `/api/payment?amount=${amount}`,
                         success: function (data) {
-                            sessionStorage.setItem("orderTemp", JSON.stringify(dataSend))
                             window.location.href = data.url
                         },
                         error: function () {
@@ -749,15 +849,19 @@
                     })
                 }
                 else  {
+                    // ✅ TIỀN MẶT: Trực tiếp tạo đơn hàng
                     $('#loading-overlay').show();
+                    console.log("🧾 DỮ LIỆU GỬI LÊN BACKEND:", JSON.stringify(dataSend, null, 2));
+
                     await $.ajax({
                         type: 'POST',
-
                         url: '/api/orderUser',
                         data: JSON.stringify(dataSend),
                         contentType: "application/json; charset=utf-8",
                         success: function (data) {
                             $('#loading-overlay').hide();
+                            console.log("✅ Phản hồi từ backend:", data);
+
                             Swal.fire({
                                 title: 'Đặt hàng',
                                 text: 'Đặt hàng thành công',
@@ -767,7 +871,6 @@
                                 cancelButtonText: 'Hủy'
                             }).then((result) => {
                                 if (result.isConfirmed) {
-                                    // Chuyển trang khi người dùng nhấn "OK"
                                     window.location.href = '/getproduct';
                                 }
                                 else {
@@ -778,6 +881,8 @@
                         },
                         error: function (xhr, status, error) {
                             $('#loading-overlay').hide();
+                            console.error("❌ Lỗi từ backend:", xhr.responseText);
+
                             swal("Lỗi", xhr.responseJSON.message, "error")
                         }
                     })
@@ -877,6 +982,157 @@
                 selectElement.appendChild(option);
             }
         }
+        
+        // ======================== ✅ TOPPING FUNCTIONS ========================
+        
+        // ✅ Load toppings cho từng sản phẩm trong giỏ hàng
+function loadToppingsForCart() {
+    $.ajax({
+        url: '/api/user/toppings',
+        type: 'GET',
+        success: function (toppings) {
+            // Duyệt qua từng sản phẩm trong giỏ
+            $('.table-shopping-cart .table-row').each(function () {
+                const productDetailId = $(this).find('.detailId').val();
+
+                // ✅ Gọi hàm render topping cho từng sản phẩm
+                displayToppingsForProduct(productDetailId, toppings);
+            });
+        },
+        error: function () {
+            // Nếu lỗi API, hiển thị thông báo lỗi cho tất cả khối topping
+            $('.topping-container').each(function () {
+                $(this).html('<p class="text-danger text-center">Không thể tải danh sách topping</p>');
+            });
+        }
+    });
+}
+//✅ Render topping riêng cho từng sản phẩm
+function displayToppingsForProduct(productDetailId, toppings) {
+    const container = $(`#topping-selection-${productDetailId}`);
+    if (!container.length) return;
+
+    container.empty();
+
+    toppings.forEach(topping => {
+        const item = `
+            <label class="topping-item d-flex justify-content-between align-items-center"
+                   data-product-id="${productDetailId}"
+                   data-topping-id="${topping.id}"
+                   data-topping-price="${topping.price}">
+                <div>
+                    <input type="checkbox" class="topping-checkbox me-2"
+                           data-product-id="${productDetailId}"
+                           value="${topping.id}">
+                    <span class="topping-name">${topping.name}</span>
+                </div>
+                <span class="topping-price">+${formatNumber(topping.price)} VND</span>
+            </label>
+        `;
+        container.append(item);
+    });
+
+    // ✅ Gắn sự kiện khi tick/untick topping → cập nhật tổng tiền realtime
+    container.find('.topping-checkbox').on('change', function () {
+        $(this).closest('.topping-item').toggleClass('selected', this.checked);
+        updateTotalWithToppings(); // gọi lại tính tổng
+    });
+}
+        // ✅ Cập nhật tổng tiền khi chọn topping
+       // ✅ Cập nhật tổng tiền (bao gồm topping và khuyến mãi)
+function updateTotalWithToppings() {
+    let productTotal = 0;
+    let toppingTotal = 0;
+
+    // 🔹 Tính tổng tiền sản phẩm (đã nhân số lượng)
+    $('.table-row').each(function () {
+        const quantity = parseInt($(this).find('.num-product').val(), 10) || 1;
+        const subtotal = parseFloat($(this).find('.total-money').text().replace(/[^0-9]/g, '')) || 0;
+        productTotal += subtotal;
+
+        // 🔹 Tính topping cho từng sản phẩm (nhân theo số lượng)
+        $(this).find('.topping-checkbox:checked').each(function () {
+            const price = parseFloat($(this).closest('.topping-item').data('topping-price')) || 0;
+            toppingTotal += price * quantity;
+        });
+    });
+
+    // 🔹 Lấy khuyến mãi (voucher)
+    const voucherDiscount = parseFloat(removeAnyNonDigit($('#voucher-pic').text())) || 0;
+
+    // 🔹 Tổng trước giảm giá
+    const totalBeforeDiscount = productTotal + toppingTotal;
+
+    // 🔹 Tổng cuối cùng
+    let finalTotal = totalBeforeDiscount - voucherDiscount;
+    if (finalTotal < 0) finalTotal = 0;
+
+    // ✅ Hiển thị tổng sản phẩm riêng
+    $('#sub-total').text(formatNumber(productTotal) + ' VND');
+
+    // ✅ Hiển thị topping riêng (nếu có)
+    if (toppingTotal > 0) {
+        if ($('#topping-total-row').length === 0) {
+            const toppingRow = `
+                <div class="flex-w flex-t bor12 p-b-13 p-t-13" id="topping-total-row">
+                    <div class="size-208">
+                        <span class="stext-110 cl2">Topping:</span>
+                    </div>
+                    <div class="size-209">
+                        <span class="mtext-110 cl2" id="topping-total">${formatNumber(toppingTotal)} VND</span>
+                    </div>
+                </div>`;
+            $('.flex-w.flex-t.bor12.p-b-13:first').after(toppingRow);
+        } else {
+            $('#topping-total').text(formatNumber(toppingTotal) + ' VND');
+        }
+    } else {
+        $('#topping-total-row').remove();
+    }
+
+    // ✅ Cập nhật tổng cuối cùng
+    $('#all-total').text(formatNumber(finalTotal) + ' VND');
+
+    // 🔍 Debug log
+    console.log("💰 Sản phẩm:", productTotal);
+    console.log("🍡 Topping (× quantity):", toppingTotal);
+    console.log("🎟️ Voucher:", voucherDiscount);
+    console.log("💵 Tổng cuối:", finalTotal);
+}
+
+
+     // ✅ Lấy danh sách topping được chọn chung cho toàn đơn hàng
+        function getSelectedToppings() {
+            const selectedToppings = [];
+
+            $('.topping-checkbox:checked').each(function() {
+                const $item = $(this).closest('.topping-item');
+                selectedToppings.push({
+                    id: parseInt($(this).val(), 10),
+                    name: $item.find('.topping-name').text().trim(),
+                    price: parseFloat($item.data('topping-price')) || 0
+                });
+            });
+
+            // ✅ đảm bảo luôn trả về mảng (kể cả khi không có topping nào)
+            return selectedToppings.length > 0 ? selectedToppings : [];
+        }
+     
+         // ✅ Lấy danh sách topping được chọn cho từng sản phẩm
+        function getSelectedToppingsForProduct(productDetailId) {
+    		const selectedToppings = [];
+
+		    $(`.topping-checkbox[data-product-id="${productDetailId}"]:checked`).each(function () {
+		        selectedToppings.push({
+		            id: parseInt($(this).val()),
+		            name: $(this).siblings('.topping-name').text(),
+		            price: parseFloat($(this).closest('.topping-item').data('topping-price'))
+		        });
+		    });
+		
+		    return selectedToppings;
+		}		
+
     </script>
 	</div>
 

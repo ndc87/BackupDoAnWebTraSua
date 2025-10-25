@@ -8,6 +8,7 @@ import com.project.DuAnTotNghiep.entity.*;
 import com.project.DuAnTotNghiep.entity.enumClass.BillStatus;
 import com.project.DuAnTotNghiep.entity.enumClass.InvoiceType;
 import com.project.DuAnTotNghiep.exception.NotFoundException;
+import com.project.DuAnTotNghiep.repository.BillDetailToppingRepository;
 import com.project.DuAnTotNghiep.repository.BillRepository;
 import com.project.DuAnTotNghiep.repository.ProductDetailRepository;
 import com.project.DuAnTotNghiep.repository.ProductRepository;
@@ -45,12 +46,15 @@ public class BillServiceImpl implements BillService {
 
     @Autowired
     private ProductDetailRepository productDetailRepository;
-
+    @Autowired
+    private BillDetailToppingRepository billDetailToppingRepository;
+    
     @Override
     public Page<BillDtoInterface> findAll(Pageable pageable) {
         return billRepository.listBill(pageable);
     }
-
+    
+    
     @Override
     public List<BillDtoInterface> findAll() {
         return billRepository.listBill();
@@ -89,27 +93,46 @@ public class BillServiceImpl implements BillService {
     }
 
     @Override
-    public List<BillDtoInterface> searchListBill(String maDinhDanh, LocalDateTime ngayTaoStart, LocalDateTime ngayTaoEnd, String trangThai, String loaiDon, String soDienThoai, String hoVaTen) {
+    public List<BillDtoInterface> searchListBill(
+            String maDinhDanh,
+            LocalDateTime ngayTaoStart,
+            LocalDateTime ngayTaoEnd,
+            String trangThai,
+            String loaiDon,
+            String soDienThoai,
+            String hoVaTen) {
+
         BillStatus status = null;
         InvoiceType invoiceType = null;
 
-        try {
-            status = BillStatus.valueOf(trangThai);
-        } catch (IllegalArgumentException e) {
-
+        // ✅ Parse enum trạng thái
+        if (trangThai != null && !trangThai.isBlank()) {
+            try {
+                status = BillStatus.valueOf(trangThai);
+            } catch (IllegalArgumentException ignored) {
+                // giá trị không hợp lệ -> để null
+            }
         }
-        try {
-            invoiceType = InvoiceType.valueOf(loaiDon);
-        } catch (IllegalArgumentException e) {
 
+        // ✅ Parse enum loại đơn
+        if (loaiDon != null && !loaiDon.isBlank()) {
+            try {
+                invoiceType = InvoiceType.valueOf(loaiDon);
+            } catch (IllegalArgumentException ignored) {
+                // giá trị không hợp lệ -> để null
+            }
         }
-        return billRepository.listSearchBill( maDinhDanh,
+
+        // ✅ Gọi repository KHÔNG PHÂN TRANG
+        return billRepository.listSearchBill(
+                maDinhDanh,
                 ngayTaoStart,
                 ngayTaoEnd,
                 status,
                 invoiceType,
                 soDienThoai,
-                hoVaTen);
+                hoVaTen
+        );
     }
 
     @Override
@@ -117,9 +140,10 @@ public class BillServiceImpl implements BillService {
 
         // Nếu hủy thì cộng lại số lượng tồn
         if(status.equals("HUY")) {
-            List<BillDetailProduct> billDetailProducts = billRepository.getBillDetailProduct(id);
+            List<BillDetailProduct> billDetailProducts = billRepository. getbill_detailProduct(id);
             billDetailProducts.forEach(item -> {
-                ProductDetail productDetail = productDetailRepository.findById(item.getId()).orElseThrow(() -> new NotFoundException("Không tìm thấy thuộc tính " + item.getId()));
+            	ProductDetail productDetail = productDetailRepository.findById(item.getProductDetailId())
+            		    .orElseThrow(() -> new NotFoundException("Không tìm thấy ProductDetail có id " + item.getProductDetailId()));
                 int quantityBefore = productDetail.getQuantity();
                 productDetail.setQuantity(quantityBefore + item.getSoLuong());
                 productDetailRepository.save(productDetail);
@@ -134,26 +158,23 @@ public class BillServiceImpl implements BillService {
 
     @Override
     public BillDetailDtoInterface getBillDetail(Long maHoaDon) {
-        return billRepository.getBillDetail(maHoaDon);
+        return billRepository.getbill_detail(maHoaDon);
     }
 
     @Override
     public Page<Bill> getBillByStatus(String status, Pageable pageable) {
         Account account = UserLoginUtil.getCurrentLogin();
-        BillStatus status1 = null;
-
-        try {
-            status1 = BillStatus.valueOf(status);
-        } catch (IllegalArgumentException e) {
-            // Handle the case where the input string does not match any enum constant
-            // You can log an error, return a default value, or perform other error handling here.
+        if (account == null || account.getCustomer() == null) {
+            throw new RuntimeException("Không tìm thấy khách hàng cho tài khoản hiện tại");
         }
-        return billRepository.findAllByStatusAndCustomer_Account_Id(status1, account.getId(), pageable);
+        Long customerId = account.getCustomer().getId();
+        return billRepository.getBillByStatus(customerId, status, pageable);
     }
+
 
     @Override
     public List<BillDetailProduct> getBillDetailProduct(Long maHoaDon) {
-        return billRepository.getBillDetailProduct(maHoaDon);
+        return billRepository. getbill_detailProduct(maHoaDon);
     }
 
     public void exportToExcel(HttpServletResponse response, Page<BillDtoInterface> bills, String exportUrl) throws IOException {
@@ -272,8 +293,8 @@ public class BillServiceImpl implements BillService {
     }
 
     public String getHtmlContent(Long maHoaDon) {
-        BillDetailDtoInterface billDetailDtoInterface = billRepository.getBillDetail(maHoaDon);
-        List<BillDetailProduct> billDetailProduct = billRepository.getBillDetailProduct(maHoaDon);
+        BillDetailDtoInterface billDetailDtoInterface = billRepository.getbill_detail(maHoaDon);
+        List<BillDetailProduct> billDetailProduct = billRepository.getbill_detailProduct(maHoaDon);
         String email = billDetailDtoInterface.getEmail();
         if (email == null) {
             email = "";
@@ -320,20 +341,33 @@ public class BillServiceImpl implements BillService {
                 "<th>Số lượng</th>\n" +
                 "<th>Tổng tiền</th>\n" +
                 "</tr>\n";
-        Double totalMoney = Double.valueOf(0);
-        for (BillDetailProduct item:
-                billDetailProduct) {
-            totalMoney += item.getGiaTien() * item.getSoLuong();
+        Double totalMoney = 0.0;
+        // ✅ Tính đúng tổng: (đơn giá + tổng topping/1sp) * số lượng
+        for (BillDetailProduct item : billDetailProduct) {
+            double toppingTotalPerUnit = billDetailToppingRepository.findAllByBillDetail_Id(item.getBillDetailId())
+                    .stream()
+                    .mapToDouble(BillDetailTopping::getToppingPrice)
+                    .sum();
+            double unitPriceWithTopping = item.getGiaTien() + toppingTotalPerUnit;
+            double lineTotal = unitPriceWithTopping * item.getSoLuong();
+            totalMoney += lineTotal;
         }
         Locale locale = new Locale("vi", "VN");
         NumberFormat currencyFormatter = NumberFormat.getCurrencyInstance(locale);
-        for (int i = 0; i < billDetailProduct.size(); i++) {
-            String productName = billDetailProduct.get(i).getTenSanPham();
-            String color = billDetailProduct.get(i).getTenMau();
-            String size = billDetailProduct.get(i).getKichCo();
-            String price = currencyFormatter.format(billDetailProduct.get(i).getGiaTien());
-            String quantity = String.valueOf(billDetailProduct.get(i).getSoLuong());
-            String total = currencyFormatter.format(billDetailProduct.get(i).getTongTien());
+        for (BillDetailProduct item : billDetailProduct) {
+            String productName = item.getTenSanPham();
+            String color = item.getTenMau();
+            String size = item.getKichCo();
+            double toppingTotalPerUnit = billDetailToppingRepository.findAllByBillDetail_Id(item.getBillDetailId())
+                    .stream()
+                    .mapToDouble(BillDetailTopping::getToppingPrice)
+                    .sum();
+            double unitPriceWithTopping = item.getGiaTien() + toppingTotalPerUnit;
+            double lineTotal = unitPriceWithTopping * item.getSoLuong();
+
+            String price = currencyFormatter.format(unitPriceWithTopping);
+            String quantity = String.valueOf(item.getSoLuong());
+            String total = currencyFormatter.format(lineTotal);
 
             htmlContent += "<tr>\n" +
                     "<td>" + productName + "</td>\n" +
@@ -356,9 +390,14 @@ public class BillServiceImpl implements BillService {
     @Override
     public Page<Bill> getBillByAccount(Pageable pageable) {
         Account account = UserLoginUtil.getCurrentLogin();
-        return billRepository.findByCustomer_Account_Id(account.getId(), pageable);
-    }
+        if (account == null || account.getCustomer() == null) {
+            throw new RuntimeException("Không tìm thấy tài khoản hoặc khách hàng tương ứng");
+        }
 
+        Long customerId = account.getCustomer().getId();
+        return billRepository.getBillByAccount(customerId, pageable);
+    }
+    
     @Override
     public void deleteById(Long id) {
         billRepository.deleteById(id);
@@ -391,11 +430,16 @@ public class BillServiceImpl implements BillService {
             customer.setCode(bill.getCustomer().getCode());
         }
         billDto.setCustomer(customer);
-        Double total = Double.valueOf(0);
-        for (BillDetail billDetail:
-             bill.getBillDetail()) {
-            total += billDetail.getQuantity() * billDetail.getMomentPrice();
+        Double total = 0.0;
+
+        for (BillDetail billDetail : bill.getBillDetail()) {
+            double toppingTotal = billDetailToppingRepository.findAllByBillDetail_Id(billDetail.getId())
+                    .stream()
+                    .mapToDouble(BillDetailTopping::getToppingPrice)
+                    .sum();
+            total += billDetail.getQuantity() * (billDetail.getMomentPrice() + toppingTotal);
         }
+
         billDto.setTotalAmount(total);
         return billDto;
     }

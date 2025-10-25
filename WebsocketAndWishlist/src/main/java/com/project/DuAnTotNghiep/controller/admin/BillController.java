@@ -22,6 +22,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -36,16 +38,17 @@ public class BillController {
 
     @Autowired
     private BillService billService;
-
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @GetMapping("/bill-list")
     public String getBill(
             Model model,
             @RequestParam(name = "page", defaultValue = "0") int page,
-            @RequestParam(name = "sort", defaultValue = "createDate,desc") String sortField,
+            @RequestParam(name = "sort", defaultValue = "ngayTao,desc") String sortField,
             @RequestParam(name = "maDinhDanh", required = false) String maDinhDanh,
             @RequestParam(name = "ngayTaoStart", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date ngayTaoStart,
-            @RequestParam(name  = "ngayTaoEnd", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date ngayTaoEnd,
+            @RequestParam(name = "ngayTaoEnd", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date ngayTaoEnd,
             @RequestParam(name = "trangThai", required = false) String trangThai,
             @RequestParam(name = "loaiDon", required = false) String loaiDon,
             @RequestParam(name = "soDienThoai", required = false) String soDienThoai,
@@ -54,40 +57,72 @@ public class BillController {
         int pageSize = 8;
         String[] sortParams = sortField.split(",");
         String sortFieldName = sortParams[0];
-        Sort.Direction sortDirection = Sort.Direction.ASC;
+        Sort.Direction sortDirection = (sortParams.length > 1 && sortParams[1].equalsIgnoreCase("desc"))
+                ? Sort.Direction.DESC : Sort.Direction.ASC;
 
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-
-        if (sortParams.length > 1 && sortParams[1].equalsIgnoreCase("desc")) {
-            sortDirection = Sort.Direction.DESC;
+        // ✅ Chuẩn hóa field sort
+        switch (sortFieldName) {
+            case "createDate":
+            case "ngayTao":
+                sortFieldName = "ngayTao";
+                break;
+            case "code":
+            case "maDinhDanh":
+                sortFieldName = "maDinhDanh";
+                break;
+            case "hoVaTen":
+                sortFieldName = "hoVaTen";
+                break;
+            case "tongTien":
+                sortFieldName = "tongTien";
+                break;
+            default:
+                sortFieldName = "ngayTao";
         }
 
-        Sort sort = Sort.by(sortDirection, sortFieldName);
-        Pageable pageable = PageRequest.of(page, pageSize, sort);
+        Pageable pageable = PageRequest.of(page, pageSize, Sort.by(sortDirection, sortFieldName));
 
-        Page<BillDtoInterface> Bill;
+        // ✅ Convert ngày lọc (nếu có)
         LocalDateTime convertedNgayTaoStart = null;
         LocalDateTime convertedNgayTaoEnd = null;
-        if (ngayTaoStart != null || ngayTaoEnd != null || maDinhDanh != null || trangThai != null || loaiDon != null || hoVaTen != null || soDienThoai != null) {
-            // Convert Date to LocalDateTime
-
-            if(ngayTaoStart != null) {
-                convertedNgayTaoStart = ngayTaoStart.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
-                model.addAttribute("ngayTaoStart", convertedNgayTaoStart.format(formatter));
-            }
-            if(ngayTaoEnd != null) {
-                convertedNgayTaoEnd = ngayTaoEnd.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
-                model.addAttribute("ngayTaoEnd", convertedNgayTaoEnd.format(formatter));
-            }
-            Bill = billService.searchListBill(maDinhDanh.trim(), convertedNgayTaoStart, convertedNgayTaoEnd, trangThai, loaiDon, soDienThoai.trim(), hoVaTen.trim(), pageable);
-        } else {
-            Bill = billService.findAll(pageable);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        if (ngayTaoStart != null) {
+            convertedNgayTaoStart = ngayTaoStart.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+            model.addAttribute("ngayTaoStart", convertedNgayTaoStart.format(formatter));
+        }
+        if (ngayTaoEnd != null) {
+            convertedNgayTaoEnd = ngayTaoEnd.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+            model.addAttribute("ngayTaoEnd", convertedNgayTaoEnd.format(formatter));
         }
 
-        model.addAttribute("sortField", sortFieldName);
-        model.addAttribute("sortDirection", sortDirection);
-        model.addAttribute("items", Bill);
+        // ✅ Truy vấn dữ liệu (Projection hoặc Entity)
+        Page<BillDtoInterface> bills;
+        if (maDinhDanh != null || ngayTaoStart != null || ngayTaoEnd != null ||
+                trangThai != null || loaiDon != null || soDienThoai != null || hoVaTen != null) {
+            bills = billService.searchListBill(
+                    maDinhDanh != null ? maDinhDanh.trim() : "",
+                    convertedNgayTaoStart, convertedNgayTaoEnd,
+                    trangThai, loaiDon,
+                    soDienThoai != null ? soDienThoai.trim() : "",
+                    hoVaTen != null ? hoVaTen.trim() : "",
+                    pageable
+            );
+        } else {
+            bills = billService.findAll(pageable);
+        }
 
+        // ✅ Ép Hibernate reload entity mới nhất (nếu service trả về Entity)
+        // Nếu billService trả về DTO Projection thì đoạn này sẽ được bỏ qua an toàn
+        bills.forEach(b -> {
+            if (b instanceof Bill) {
+                entityManager.refresh(b);
+                System.out.println("🧾 BILL ADMIN REFRESHED => ID: " +
+                        ((Bill) b).getId() + ", AMOUNT: " + ((Bill) b).getAmount());
+            }
+        });
+
+        // ✅ Gửi sang view
+        model.addAttribute("items", bills);
         model.addAttribute("maDinhDanh", maDinhDanh);
         model.addAttribute("trangThai", trangThai);
         model.addAttribute("loaiDon", loaiDon);
@@ -96,6 +131,7 @@ public class BillController {
         model.addAttribute("sortField", sortField);
         model.addAttribute("billStatus", BillStatus.values());
         model.addAttribute("invoiceType", InvoiceType.values());
+
         return "admin/bill";
     }
 
@@ -135,12 +171,20 @@ public class BillController {
 
         BillDetailDtoInterface billDetailDtoInterface = billService.getBillDetail(maHoaDon);
         List<BillDetailProduct> billDetailProducts = billService.getBillDetailProduct(maHoaDon);
-        Double total = Double.valueOf("0");
-            for (BillDetailProduct billDetailProduct:
-                 billDetailProducts) {
-                int q = billDetailProduct.getSoLuong();
-                total += billDetailProduct.getGiaTien() * q;
+        Double total = 0.0;
+        for (BillDetailProduct billDetailProduct : billDetailProducts) {
+            int q = billDetailProduct.getSoLuong();
+
+            // ✅ Lấy tổng topping (nếu có)
+            double tongTopping = 0.0;
+            if (billDetailProduct.getTongTopping() != null) {
+                tongTopping = billDetailProduct.getTongTopping();
             }
+
+            // ✅ Tổng tiền = (giá sản phẩm + topping) * số lượng
+            double thanhTien = (billDetailProduct.getTongTien() + tongTopping) * q;
+            total += thanhTien;
+        }
         model.addAttribute("billDetailProduct", billDetailProducts);
         model.addAttribute("billdetail", billDetailDtoInterface);
         model.addAttribute("total", total);

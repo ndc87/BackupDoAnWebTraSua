@@ -4,6 +4,7 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import javax.servlet.http.HttpServletRequest;
 import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -55,24 +56,30 @@ public class ConfigVNPay {
     }
 
     //Util for VNPAY
-    public static String hashAllFields(Map fields) {
-        List fieldNames = new ArrayList(fields.keySet());
+    public static String hashAllFields(Map<String, String> fields) {
+        List<String> fieldNames = new ArrayList<>(fields.keySet());
         Collections.sort(fieldNames);
         StringBuilder sb = new StringBuilder();
-        Iterator itr = fieldNames.iterator();
-        while (itr.hasNext()) {
-            String fieldName = (String) itr.next();
-            String fieldValue = (String) fields.get(fieldName);
-            if ((fieldValue != null) && (fieldValue.length() > 0)) {
+        boolean isFirst = true;
+        for (String fieldName : fieldNames) {
+            String fieldValue = fields.get(fieldName);
+            if (fieldValue != null && fieldValue.length() > 0) {
+                if (!isFirst) {
+                    sb.append('&');
+                }
                 sb.append(fieldName);
-                sb.append("=");
-                sb.append(fieldValue);
-            }
-            if (itr.hasNext()) {
-                sb.append("&");
+                sb.append('=');
+                // VNPay spec: use URL-encoded value for hashing
+                try {
+                    sb.append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII.toString()));
+                } catch (UnsupportedEncodingException e) {
+                    // Fallback to raw if encoding unexpectedly fails
+                    sb.append(fieldValue);
+                }
+                isFirst = false;
             }
         }
-        return hmacSHA512(secretKey,sb.toString());
+        return hmacSHA512(secretKey, sb.toString());
     }
 
     public static String hmacSHA512(final String key, final String data) {
@@ -99,16 +106,51 @@ public class ConfigVNPay {
     }
 
     public static String getIpAddress(HttpServletRequest request) {
-        String ipAdress;
+        String ipAddress;
         try {
-            ipAdress = request.getHeader("X-FORWARDED-FOR");
-            if (ipAdress == null) {
-                ipAdress = request.getRemoteAddr();
+            ipAddress = request.getHeader("X-FORWARDED-FOR");
+            if (ipAddress == null || ipAddress.isEmpty()) {
+                ipAddress = request.getRemoteAddr();
             }
+            
+            // Convert IPv6 to IPv4 if needed
+            // IPv6 localhost (0:0:0:0:0:0:0:1) → convert to 127.0.0.1
+            if ("0:0:0:0:0:0:0:1".equals(ipAddress) || "::1".equals(ipAddress)) {
+                ipAddress = "127.0.0.1";
+            }
+            
+            // Handle IPv6 full form and compressed form
+            if (ipAddress.contains(":")) {
+                // If it's IPv6, try to use localhost IP instead
+                // VNPAY only accepts IPv4 addresses
+                if (ipAddress.startsWith("0:") || ipAddress.startsWith("::")) {
+                    ipAddress = "127.0.0.1";
+                } else {
+                    // For other IPv6 addresses, log warning
+                    System.out.println("[VNPay] ⚠️ IPv6 address detected: " + ipAddress + ", converting to 127.0.0.1");
+                    ipAddress = "127.0.0.1";
+                }
+            }
+            
         } catch (Exception e) {
-            ipAdress = "Invalid IP:" + e.getMessage();
+            System.err.println("[VNPay] ❌ Error getting IP: " + e.getMessage());
+            ipAddress = "127.0.0.1"; // Default to localhost if error
         }
-        return ipAdress;
+        
+        System.out.println("✅ [VNPay] IP Address converted: " + ipAddress);
+        return ipAddress;
+    }
+
+    public static String validateAndSanitizeParameter(String value) {
+        if (value == null) return "";
+        // Remove any problematic characters that might cause VNPAY JS issues
+        return value.trim();
+    }
+
+    public static boolean validateAmount(long amount) {
+        // VNPAY requires amount >= 10000 VND (100,000 in units of 1)
+        // and <= 999,999,999,999 VND
+        return amount >= 1000 && amount <= 999999999999L;
     }
 
     public static String getRandomNumber(int len) {

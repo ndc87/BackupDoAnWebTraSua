@@ -7,7 +7,6 @@ import com.project.DuAnTotNghiep.repository.CustomerRepository;
 import com.project.DuAnTotNghiep.repository.ProductRepository;
 import com.project.DuAnTotNghiep.service.StatisticService;
 import org.springframework.stereotype.Service;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;

@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
-@Table(name = "Bill")
+@Table(name = "bill") 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -22,8 +22,14 @@ public class Bill implements Serializable {
 
     @Column(length = 50, nullable = false)
     private String code;
+
+    @Column(name = "promotion_price")
     private double promotionPrice;
+
+    @Column(name = "create_date")
     private LocalDateTime createDate;
+
+    @Column(name = "update_date")
     private LocalDateTime updateDate;
 
     @Enumerated(EnumType.STRING)
@@ -35,21 +41,23 @@ public class Bill implements Serializable {
     private InvoiceType invoiceType;
 
     @Nationalized
+    @Column(name = "billing_address")
     private String billingAddress;
 
     private Double amount;
 
+    @Column(name = "return_status")
     private Boolean returnStatus;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "customerId")
+    @JoinColumn(name = "customer_id")
     private Customer customer;
 
     @ManyToOne
-    @JoinColumn(name = "paymentMethodId")
+    @JoinColumn(name = "payment_method_id")
     private PaymentMethod paymentMethod;
 
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "bill")
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "bill", orphanRemoval = true)
     private List<BillDetail> billDetail;
 
     @ManyToOne

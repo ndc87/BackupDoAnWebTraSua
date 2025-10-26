@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	xmlns:th="http://www.thymeleaf.org" lang="en"
+	xmlns:sec="https://www.thymeleaf.org/thymeleaf-extras-springsecurity5">
+<head th:replace="fragments-admin::page_head('Admin page')">
+<script>
+	
+</script>
+</head>
+<style>
+.user-menu {
+	display: none;
+}
+
+.user-menu.active {
+	display: block;
+}
+
+.nav-link:hover {
+	background-color: #cccccc;
+}
+</style>
+<body>
+	<aside id="left-panel" class="left-panel">
+		<nav class="navbar navbar-expand-sm navbar-default">
+			<div class="navbar-header">
+				<button class="navbar-toggler" type="button" data-toggle="collapse"
+					data-target="#main-menu" aria-controls="main-menu"
+					aria-expanded="false" aria-label="Toggle navigation">
+					<i class="fa fa-bars"></i>
+				</button>
+				<a class="navbar-brand text-white" style="background-color: #272c33"
+					href="./"><img th:src="@{/images/logots.png}" alt="Logo"></a>
+				<a class="navbar-brand hidden" href="./"><img
+					th:src="@{/images/logots.png}" alt="Logo"></a>
+			</div>
+			<div id="main-menu" class="main-menu collapse navbar-collapse">
+				<ul class="nav navbar-nav">
+					<li class="active" sec:authorize="hasAnyRole('ADMIN','VENDOR')">
+						<a th:href="@{/admin/thong-ke-doanh-thu}"> <i
+							class="menu-icon fas fa-home"></i>Trang chủ
+					</a>
+					</li>
+					<li class="active" sec:authorize="hasAnyRole('ADMIN','VENDOR')">
+						<a th:href="@{/admin/pos}"> <i
+							class="menu-icon fa fa-shopping-bag"></i>Bán hàng tại quầy
+					</a>
+					</li>
+					<li class="menu-title" sec:authorize="hasAnyRole('ADMIN','VENDOR')">QUẢN
+						LÝ</li>
+					<li class="menu-item-has-children dropdown"
+						sec:authorize="hasAnyRole('ADMIN','VENDOR')"><a href="#"
+						class="dropdown-toggle" data-toggle="dropdown"
+						aria-haspopup="true" aria-expanded="false"> <i
+							class="menu-icon fa fa-laptop"></i>Quản lý sản phẩm
+					</a>
+						<ul class="sub-menu children dropdown-menu">
+							<li sec:authorize="hasAnyRole('ADMIN','VENDOR')"><a
+								th:href="@{/admin/product-all}"><i class="fas fa-tshirt"></i>Sản
+									phẩm</a></li>
+
+							<li sec:authorize="hasAnyRole('ADMIN','VENDOR')"><a
+								th:href="@{/admin/topping-management}"> <i
+									class="fas fa-plus-circle"></i>Topping
+							</a></li>
+							<li sec:authorize="hasAnyRole('ADMIN','VENDOR')"><a
+								th:href="@{/admin/color-list}"><i class="fas fa-palette"></i>Thể
+									tích đường</a></li>
+							<li sec:authorize="hasAnyRole('ADMIN','VENDOR')"><a
+								th:href="@{/admin/size-all}"><i class="fas fa-ruler"></i>Size</a></li>
+							<li sec:authorize="hasAnyRole('ADMIN','VENDOR')"><a
+								th:href="@{/admin/brand-all}"><i class="far fa-copyright"></i>Nhãn
+									hàng</a></li>
+							<li sec:authorize="hasRole('ADMIN')"><a
+								th:href="@{/admin/category-all}"><i class="fas fa-cubes"></i>Loại
+									sản phẩm</a></li>
+							<li sec:authorize="hasRole('ADMIN')"><a
+								th:href="@{/admin/material-all}"><i
+									class="fab fa-cotton-bureau"></i>Loại trà</a></li>
+						</ul></li>
+					<li class="menu-item-has-children dropdown"
+						sec:authorize="hasAnyRole('ADMIN','VENDOR')"><a href="#"
+						class="dropdown-toggle" data-toggle="dropdown"
+						aria-haspopup="true" aria-expanded="false"> <i
+							class="menu-icon fa fa-table"></i>Quản lý hóa đơn
+					</a>
+						<ul class="sub-menu children dropdown-menu">
+							<li sec:authorize="hasAnyRole('ADMIN','VENDOR')"><i
+								class="fas fa-file-invoice"></i><a th:href="@{/admin/bill-list}">Hóa
+									đơn</a></li>
+							<li sec:authorize="hasAnyRole('ADMIN','VENDOR')"><i
+								class="fas fa-exchange-alt"></i><a
+								th:href="@{/admin-only/bill-return}">Đổi trả</a></li>
+						</ul></li>
+					<li class="menu-item-has-children dropdown"
+						sec:authorize="hasAnyRole('ADMIN','VENDOR')"><a href="#"
+						class="dropdown-toggle" data-toggle="dropdown"
+						aria-haspopup="true" aria-expanded="false"> <i
+							class="menu-icon fa fa-american-sign-language-interpreting"></i>Công
+							cụ khuyến mãi
+					</a>
+						<ul class="sub-menu children dropdown-menu">
+							<li sec:authorize="hasAnyRole('ADMIN','VENDOR')"><a
+								th:href="@{/admin-only/discount-code}"><i
+									class="fa fa-hand-peace-o"></i>Mã giảm giá</a></li>
+							<li sec:authorize="hasAnyRole('ADMIN','VENDOR')"><a
+								th:href="@{/admin-only/product-discount}"><i
+									class="fas fa-tag"></i>Giảm giá sản phẩm</a></li>
+						</ul></li>
+					<li class="menu-item-has-children dropdown"
+						sec:authorize="hasRole('ADMIN')"><a href="#"
+						class="dropdown-toggle" data-toggle="dropdown"
+						aria-haspopup="true" aria-expanded="false"> <i
+							class="menu-icon fas fa-shopping-basket"></i>Giao dịch
+					</a>
+						<ul class="sub-menu children dropdown-menu">
+							<li><i class="fas fa-undo"></i><a
+								th:href="@{/admin-only/need-refund-mng}">Đơn hoàn tiền</a></li>
+						</ul></li>
+					<li class="menu-item-has-children dropdown"
+						sec:authorize="hasAnyRole('ADMIN','VENDOR')"><a href="#"
+						class="dropdown-toggle" data-toggle="dropdown"
+						aria-haspopup="true" aria-expanded="false"> <i
+							class="menu-icon fas fa-project-diagram"></i>Thống kê
+					</a>
+						<ul class="sub-menu children dropdown-menu">
+							<li sec:authorize="hasAnyRole('ADMIN','VENDOR')"><i
+								class="fas fa-chart-line"></i><a
+								th:href="@{/admin/thong-ke-doanh-thu}">Doanh Thu</a></li>
+							<li sec:authorize="hasAnyRole('ADMIN','VENDOR')"><i
+								class="fas fa-chart-pie"></i><a
+								th:href="@{/admin/thong-ke-san-pham}">Sản phẩm</a></li>
+						</ul></li>
+					<li class="menu-item-has-children dropdown"
+						sec:authorize="hasRole('ADMIN')"><a href="#"
+						class="dropdown-toggle" data-toggle="dropdown"
+						aria-haspopup="true" aria-expanded="false"> <i
+							class="menu-icon fas fa-user"></i>Quản lý tài khoản
+					</a>
+						<ul class="sub-menu children dropdown-menu">
+							<li><i class="fas fa-chart-line"></i><a
+								th:href="@{/admin-only/account-management}">Tài khoản</a></li>
+						</ul></li>
+					<li class="menu-title" sec:authorize="hasAnyRole('ADMIN','VENDOR')">Công
+						cụ khác</li>
+					<li class="menu-item-has-children dropdown"
+						sec:authorize="hasAnyRole('ADMIN','VENDOR')"><a href="#"
+						class="dropdown-toggle" data-toggle="dropdown"
+						aria-haspopup="true" aria-expanded="false"> <i
+							class="menu-icon fa fa-glass"></i>Khác
+					</a>
+						<ul class="sub-menu children dropdown-menu">
+							<li><i class="menu-icon fa fa-sign-in"></i><a
+								th:href="@{/user_logout}">Đăng xuất</a></li>
+							<li><i class="menu-icon fa fa-paper-plane"></i><a
+								th:href="@{/profile}">Cập nhật thông tin</a></li>
+						</ul></li>
+					<li class="menu-item" sec:authorize="hasAnyRole('ADMIN','VENDOR')">
+						<a th:href="@{/admin/chat}"> <i
+							class="menu-icon fa fa-comments"></i>💬 Chat hỗ trợ khách hàng
+					</a>
+					</li>
+				</ul>
+			</div>
+		</nav>
+	</aside>
+	<!-- /#left-panel -->
+	<div id="right-panel" class="right-panel">
+		<!-- Header-->
+		<header id="header" class="header">
+			<div class="col-sm-7">
+				<a id="menuToggle" class="menutoggle pull-left"><i
+					class="fa fa fa-tasks"></i></a>
+			</div>
+			<div class="col-sm-5">
+				<div class="user-area dropdown float-right">
+					<span sec:authentication="principal.username"></span> <a href="#"
+						class="dropdown-toggle" data-toggle="dropdown"
+						aria-haspopup="true" aria-expanded="false"> <img
+						class="user-avatar rounded-circle"
+						src="https://www.kkday.com/vi/blog/wp-content/uploads/chup-anh-dep-bang-dien-thoai-25.jpg"
+						alt="User Avatar"
+						style="border-radius: 50%; height: 34px; width: 34px;">
+					</a>
+					<div class="user-menu">
+						<a class="nav-link" th:href="@{/}"><i class="fa fa-user"></i>
+							Trang khách</a> <a class="nav-link" th:href="@{/user_logout}"><i
+							class="fa fa-power-off"></i> Đăng xuất</a>
+					</div>
+				</div>
+			</div>
+		</header>
+		<div class="content p-4">
+			<div layout:fragment="content"></div>
+		</div>
+	</div>
+	<th:block th:replace="fragments-admin::script"></th:block>
+	<script>
+		$('.user-avatar').on('click', function() {
+			if ($('.user-menu').hasClass('active')) {
+				$('.user-menu').removeClass('active')
+			} else {
+				$('.user-menu').addClass('active')
+			}
+		})
+	</script>
+</body>
+</html>

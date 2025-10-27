@@ -358,207 +358,620 @@
 
         </script>
 		<script>
-		// ===============================================================
-		// ✅ 1️⃣ Khởi tạo khi DOM sẵn sàng
-		// ===============================================================
+            document.addEventListener("DOMContentLoaded", function () {
+            	var $revenueDayInMonth = $('#revenueDayInMonth');
+            	var $revenueMonthInYear = $('#revenueMonthInYear');
+            	var $revenueInTime = $('#revenueInTime');
+
+            	// ✅ Khi đổi tháng: gọi lại API có branchId (nếu đang chọn chi nhánh)
+            	$('#month').on('change', function () {
+            	    callApiGetInMonth($(this).val(), $('#year').val(), window.selectedBranchId || null);
+            	});
+
+            	// ✅ Khi đổi năm ở phần "Doanh thu theo tháng"
+            	$('#year').on('change', function () {
+            	    callApiGetInMonth($("#month").val(), $(this).val(), window.selectedBranchId || null);
+            	});
+
+            	// ✅ Khi đổi năm ở phần "Doanh thu theo năm"
+            	$('#monthYear').on('change', function () {
+            	    callApiGetInYear($(this).val(), window.selectedBranchId || null);
+            	});
+
+            	$('.by-date').show();
+            	$('.by-month').hide();
+
+            	const plugin = {
+            	    id: 'customCanvasBackgroundColor',
+            	    beforeDraw: (chart, args, options) => {
+            	        const { ctx } = chart;
+            	        ctx.save();
+            	        ctx.globalCompositeOperation = 'destination-over';
+            	        ctx.fillStyle = options.color || '#99ffff';
+            	        ctx.fillRect(0, 0, chart.width, chart.height);
+            	        ctx.restore();
+            	    }
+            	};
+
+            	// ✅ Khi load trang lần đầu — mặc định xem toàn hệ thống
+            	const currentMonth = new Date().getMonth() + 1;
+            	const currentYear = new Date().getFullYear();
+
+            	callApiGetInMonth(currentMonth, currentYear, window.selectedBranchId || null);
+            	callApiGetInYear(currentYear, window.selectedBranchId || null);
+
+                function callApiGetInMonth(month, year, branchId = null) {
+				    const url = branchId
+				        ? `/api/get-statistic-revenue-day-in-month?month=${month}&year=${year}&branchId=${branchId}`
+				        : `/api/get-statistic-revenue-day-in-month?month=${month}&year=${year}`;
+				
+				    $.ajax({
+				        type: 'GET',
+				        dataType: 'json',
+				        url: url,
+				        success: function (data) {
+				            var lableList = []
+				            var dataList = []
+				            data.forEach(item => {
+				                lableList.push(item.date)
+				                dataList.push(item.revenue)
+				            })
+				            loadChart(lableList, dataList)
+				        }
+				    })
+				}
+                window.callApiGetInMonth = callApiGetInMonth;
+
+
+                function callApiGetInYear(year, branchId = null) {
+                    const url = branchId
+                        ? `/api/get-statistic-revenue-month-in-year?year=${year}&branchId=${branchId}`
+                        : `/api/get-statistic-revenue-month-in-year?year=${year}`;
+
+                    $.ajax({
+                        type: 'GET',
+                        dataType: 'json',
+                        url: url,
+                        success: function (data) {
+                            var lableList = []
+                            var dataList = []
+                            data.forEach(item => {
+                                lableList.push(item.month)
+                                dataList.push(item.revenue)
+                            })
+                            loadChartYear(lableList, dataList)
+                        }
+                    })
+                }
+                window.callApiGetInYear = callApiGetInYear;
+
+
+
+               function loadChart(labelList, dataList) {
+                    const label = `Doanh thu`
+                   let chartStatus = Chart.getChart("revenueDayInMonth"); // <canvas> id
+                   if (chartStatus != undefined) {
+                       chartStatus.destroy();
+                   }
+                    var chart = new Chart($revenueDayInMonth, {
+                        type: 'line',
+                        data: {
+                            labels: labelList,  // Các tháng của năm
+                            datasets: [
+                                {
+                                    label: label,
+                                    data: dataList,
+
+                                    borderColor: 'rgb(0,143,255)',
+                                    tension: 0.1
+                                },
+                            ]
+                        },
+
+                        options: {
+
+                            plugins: {
+                                title: {
+                                    display: true,
+                                    text: `Doanh thu tháng ${$('#month').val()}-${$('#year').val()}`
+                                },
+                                customCanvasBackgroundColor: {
+                                    color: '#fff',
+                                }
+                            }
+                        },
+
+                        plugins: [plugin],
+                    });
+                }
+                function loadChartYear(labelList, dataList) {
+                    let chartStatus = Chart.getChart("revenueMonthInYear"); // <canvas> id
+                    if (chartStatus != undefined) {
+                        chartStatus.destroy();
+                    }
+                    var chart = new Chart($revenueMonthInYear, {
+                        type: 'line',
+                        data: {
+                            labels: labelList,  // Các tháng của năm
+                            datasets: [
+                                {
+                                    label: 'Doanh thu',
+                                    data: dataList,
+
+                                    borderColor: 'rgb(0,143,255)',
+                                    tension: 0.1
+                                },
+                            ]
+                        },
+
+                        options: {
+
+                            plugins: {
+                                title: {
+                                    display: true,
+                                    text: `Doanh thu năm ${$('#monthYear').val()}`
+                                },
+                                customCanvasBackgroundColor: {
+                                    color: '#fff',
+                                }
+                            }
+                        },
+
+                        plugins: [plugin],
+                    });
+                }
+            });
+
+            callApiStatisInTime($('#dateStart').val(), $('#dateEnd').val())
+
+
+            $('#apply-statistic').on('click', function () {
+                var selectValue = $('#time-category').val()
+                if(selectValue == 1) {
+                    handleStatisTicFromDate()
+                }else  {
+                    handlehandleStatisTicFromMonth()
+                }
+            })
+
+            function handleStatisTicFromDate() {
+                const startDate = $('#dateStart').val()
+                const toDate = $('#dateEnd').val()
+                if(!startDate) {
+                    Toastify({
+                        text: "Vui lòng nhâp ngày bắt đầu",
+                        className: "error",
+                        style: {
+                            background: "red",
+                            color: "white"
+                        }
+                    }).showToast();
+                    return
+                }
+
+                if(toDate == "") {
+                    Toastify({
+                        text: "Vui lòng nhâp ngày kết thúc",
+                        className: "error",
+                        style: {
+                            background: "red",
+                            color: "white"
+                        }
+                    }).showToast();
+                    return;
+                }
+
+                if(startDate >= toDate) {
+                    Toastify({
+                        text: "Ngày kết thúc phải lớn hơn ngày bắt đầu",
+                        className: "error",
+                        style: {
+                            background: "red",
+                            color: "white"
+                        }
+                    }).showToast();
+                    return;
+                }
+
+                const timeDifference = new Date(toDate).getTime() - new Date(startDate).getTime();
+
+                const dayDifference = timeDifference / (1000 * 60 * 60 * 24);
+
+                if (dayDifference > 60) {
+                    Toastify({
+                        text: "Khoảng cách giữa ngày bắt đầu và ngày kết thúc không được vượt quá 60 ngày",
+                        className: "error",
+                        style: {
+                            background: "red",
+                            color: "white"
+                        }
+                    }).showToast();
+                    return;
+                }
+
+                callApiStatisInTime(startDate, toDate)
+            }
+            function handlehandleStatisTicFromMonth() {
+                const startMonth = $('#monthStart').val();
+                const toMonth = $('#monthEnd').val();
+                if(!startMonth) {
+                    Toastify({
+                        text: "Vui lòng nhâp ngày bắt đầu",
+                        className: "error",
+                        style: {
+                            background: "red",
+                            color: "white"
+                        }
+                    }).showToast();
+                    return
+                }
+
+                if(!toMonth) {
+                    Toastify({
+                        text: "Vui lòng nhâp ngày bắt đầu",
+                        className: "error",
+                        style: {
+                            background: "red",
+                            color: "white"
+                        }
+                    }).showToast();
+                    return
+                }
+
+                const startDate = new Date(startMonth + '-01');
+                const toDate = new Date(toMonth + '-01');
+
+                const monthDifference = (toDate.getFullYear() - startDate.getFullYear()) * 12 + (toDate.getMonth() - startDate.getMonth());
+
+                if (toDate <= startDate) {
+                    // Valid
+                    Toastify({
+                        text: "Tháng kết thúc phải lớn hơn tháng bắt đầu",
+                        className: "error",
+                        style: {
+                            background: "red",
+                            color: "white"
+                        }
+                    }).showToast();
+                } else if(monthDifference > 60) {
+                    Toastify({
+                        text: "Khoảng cách giữa các tháng không lớn hơn 5 năm (60 tháng)",
+                        className: "error",
+                        style: {
+                            background: "red",
+                            color: "white"
+                        }
+                    }).showToast();
+                } else {
+                    callApiStatisticInMonth(startMonth, toMonth)
+                }
+
+            }
+
+            function callApiStatisInTime(startDate, toDate, branchId = null) {
+                const url = branchId
+                    ? `/api/get-statistic-revenue-day-from-time?fromDate=${startDate}&toDate=${toDate}&branchId=${branchId}`
+                    : `/api/get-statistic-revenue-day-from-time?fromDate=${startDate}&toDate=${toDate}`;
+
+                $.ajax({
+                    type: 'GET',
+                    dataType: 'json',
+                    url: url,
+                    success: function (data) {
+                        var lableList = []
+                        var dataList = []
+                        data.forEach(item => {
+                            lableList.push(item.date)
+                            dataList.push(item.revenue)
+                        })
+                        loadChartInTime(lableList, dataList)
+                    }
+                })
+            }
+            window.callApiStatisInTime = callApiStatisInTime;
+
+
+
+            function callApiStatisticInMonth(startMonth, toMonth, branchId = null) {
+                const url = branchId
+                    ? `/api/get-statistic-revenue-month-from-time?fromMonth=${startMonth}&toMonth=${toMonth}&branchId=${branchId}`
+                    : `/api/get-statistic-revenue-month-from-time?fromMonth=${startMonth}&toMonth=${toMonth}`;
+
+                $.ajax({
+                    type: 'GET',
+                    dataType: 'json',
+                    url: url,
+                    success: function (data) {
+                        var lableList = []
+                        var dataList = []
+                        data.forEach(item => {
+                            lableList.push(item.month)
+                            dataList.push(item.revenue)
+                        })
+                        loadChartInTime(lableList, dataList)
+                    }
+                })
+            }
+            window.callApiStatisticInMonth = callApiStatisticInMonth;
+
+
+
+            function loadChartInTime(labelList, dataList) {
+                let chartStatus = Chart.getChart("revenueInTime"); // <canvas> id
+                if (chartStatus != undefined) {
+                    chartStatus.destroy();
+                }
+                var chart = new Chart($('#revenueInTime'), {
+                    type: 'scatter',
+                    data: {
+                        labels: labelList,  // Các tháng của năm
+                        datasets: [
+                            {
+                                type: 'bar',
+                                label: 'Doanh thu',
+                                data: dataList,
+
+                                borderColor: 'rgb(54, 162, 235)',
+                                backgroundColor: '#ff6384',
+                            },
+
+                            // {
+                            //     type: 'line',
+                            //     label: 'Doanh thu',
+                            //     data: dataList,
+                            //     borderColor: '#ff6384'
+                            // }
+                        ]
+                    },
+
+                    options: {
+
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: `Biểu đồ doanh thu`
+                            },
+                            customCanvasBackgroundColor: {
+                                color: '#fff',
+                            }
+                        }
+                    },
+                    plugins: [plugin],
+                });
+            }
+
+            $('#export').on('click', exportToExcel)
+
+            async function exportToExcel() {
+                if($('#time-category').val() == 1) {
+                    /* fetch JSON data and parse */
+                    const url = `/api/get-statistic-revenue-day-from-time?fromDate=${$('#dateStart').val()}&toDate=${$('#dateEnd').val()}`;
+                    const raw_data = await (await fetch(url)).json();
+                    /* generate worksheet and workbook */
+                    const worksheet = XLSX.utils.json_to_sheet(raw_data);
+                    const workbook = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(workbook, worksheet, "SanPham");
+                    const heading =[
+                        ["Ngày", "Doanh thu"]
+                    ]
+                    /* fix headers */
+                    XLSX.utils.sheet_add_aoa(worksheet,heading , {origin: "A1"});
+                    /* create an XLSX file and try to save to Presidents.xlsx */
+                    XLSX.writeFile(workbook, `thong-ke-doanh-thu_${$('#dateStart').val()}-${$('#dateEnd').val()}.xlsx`, {compression: true});
+                }
+                else {
+
+                }
+            }
+
+
+
+            function formatToYYYYMMDD(date) {
+                var yyyy = date.getFullYear().toString();
+                var mm = (date.getMonth() + 1).toString().padStart(2, '0');
+                var dd = date.getDate().toString().padStart(2, '0');
+                return yyyy + '-' + mm + '-' + dd;
+            }
+            function formatNumber(number) {
+                return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+            }
+
+            function removeAnyNonDigit(value) {
+                return value.replace(/\D/g, '');
+            }
+
+            const plugin = {
+                id: 'customCanvasBackgroundColor',
+                beforeDraw: (chart, args, options) => {
+                    const {ctx} = chart;
+                    ctx.save();
+                    ctx.globalCompositeOperation = 'destination-over';
+                    ctx.fillStyle = options.color || '#99ffff';
+                    ctx.fillRect(0, 0, chart.width, chart.height);
+                    ctx.restore();
+                }
+            };
+        </script>
+
+		<!-- ✅ Import jQuery -->
+		<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+		<!-- ✅ Import Popper.js -->
+		<script
+			src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
+		<!-- ✅ Import Bootstrap 5 Bundle (includes Tooltip and Popover) -->
+		<script
+			src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+		<script>
+		// ✅ Verify Bootstrap and jQuery are loaded
+		console.log("✅ typeof bootstrap:", typeof bootstrap);
+		console.log("✅ typeof bootstrap.Modal:", typeof bootstrap?.Modal);
+		console.log("✅ typeof $:", typeof $);
+		console.log("✅ typeof $.fn.modal:", typeof $.fn?.modal);
+
 		document.addEventListener("DOMContentLoaded", function () {
-		    console.log("✅ DOM Loaded");
+			console.log("✅ Page loaded - Modal initialization starting...");
 
-		    const $revenueDayInMonth = $('#revenueDayInMonth');
-		    const $revenueMonthInYear = $('#revenueMonthInYear');
-		    const $revenueInTime = $('#revenueInTime');
-
-		    // ✅ Khi đổi tháng
-		    $('#month').on('change', function () {
-		        callApiGetInMonth($(this).val(), $('#year').val(), window.selectedBranchId || null);
-		    });
-
-		    // ✅ Khi đổi năm ở phần "Doanh thu theo tháng"
-		    $('#year').on('change', function () {
-		        callApiGetInMonth($("#month").val(), $(this).val(), window.selectedBranchId || null);
-		    });
-
-		    // ✅ Khi đổi năm ở phần "Doanh thu theo năm"
-		    $('#monthYear').on('change', function () {
-		        callApiGetInYear($(this).val(), window.selectedBranchId || null);
-		    });
-
-		    $('.by-date').show();
-		    $('.by-month').hide();
-
-		    // ✅ Plugin nền chart (nền trắng)
-		    window.chartBgPlugin = {
-		        id: 'customCanvasBackgroundColor',
-		        beforeDraw: (chart, args, options) => {
-		            const { ctx } = chart;
-		            ctx.save();
-		            ctx.globalCompositeOperation = 'destination-over';
-		            ctx.fillStyle = options.color || '#fff';
-		            ctx.fillRect(0, 0, chart.width, chart.height);
-		            ctx.restore();
-		        }
-		    };
-
-		    // ✅ Khi load trang lần đầu
-		    const currentMonth = new Date().getMonth() + 1;
-		    const currentYear = new Date().getFullYear();
-		    callApiGetInMonth(currentMonth, currentYear, window.selectedBranchId || null);
-		    callApiGetInYear(currentYear, window.selectedBranchId || null);
+			// ✅ Get button and add event listener
+			const btnSelectBranch = document.getElementById("btnSelectBranch");
+			if (btnSelectBranch) {
+				btnSelectBranch.addEventListener("click", function (e) {
+					e.preventDefault();
+					console.log("✅ Button clicked - Opening modal...");
+					openBranchModal();
+				});
+			} else {
+				console.error("❌ Button #btnSelectBranch not found!");
+			}
 		});
 
-		// ===============================================================
-		// ✅ 2️⃣ Hàm vẽ biểu đồ
-		// ===============================================================
-		function loadChart(labelList, dataList) {
-		    let chartStatus = Chart.getChart("revenueDayInMonth");
-		    if (chartStatus) chartStatus.destroy();
-
-		    new Chart($('#revenueDayInMonth'), {
-		        type: 'line',
-		        data: {
-		            labels: labelList,
-		            datasets: [{
-		                label: 'Doanh thu',
-		                data: dataList,
-		                borderColor: 'rgb(0,143,255)',
-		                tension: 0.1
-		            }]
-		        },
-		        options: {
-		            plugins: {
-		                title: {
-		                    display: true,
-		                    text: `Doanh thu tháng ${$('#month').val()}-${$('#year').val()}`
-		                },
-		                customCanvasBackgroundColor: { color: '#fff' }
-		            }
-		        },
-		        plugins: [window.chartBgPlugin],
-		    });
+		// ✅ Open branch modal using Bootstrap 5 native API
+		function openBranchModal() {
+			try {
+				const modalEl = document.getElementById("branchModal");
+				if (!modalEl) {
+					console.error("❌ Modal element #branchModal not found!");
+					return;
+				}
+		
+				// ✅ Kiểm tra Bootstrap có tồn tại chưa (tránh lỗi undefined)
+				if (typeof bootstrap === "undefined" || !bootstrap.Modal) {
+					console.error("❌ Bootstrap Modal chưa sẵn sàng hoặc chưa load!");
+					// fallback jQuery nếu có
+					$("#branchModal").modal("show");
+					return;
+				}
+		
+				const modal = new bootstrap.Modal(modalEl);
+				modal.show();
+				console.log("✅ Modal opened successfully!");
+				loadBranchList();
+			} catch (err) {
+				console.error("❌ Error opening modal:", err);
+				// fallback cuối cùng (nếu Bootstrap bị lỗi)
+				$("#branchModal").modal("show");
+			}
 		}
 
-		function loadChartYear(labelList, dataList) {
-		    let chartStatus = Chart.getChart("revenueMonthInYear");
-		    if (chartStatus) chartStatus.destroy();
+		// ✅ Load branch list from API
+		async function loadBranchList() {
+			const listContainer = document.getElementById("branchList");
+			if (!listContainer) {
+				console.error("❌ Branch list container not found!");
+				return;
+			}
 
-		    new Chart($('#revenueMonthInYear'), {
-		        type: 'line',
-		        data: {
-		            labels: labelList,
-		            datasets: [{
-		                label: 'Doanh thu',
-		                data: dataList,
-		                borderColor: 'rgb(0,143,255)',
-		                tension: 0.1
-		            }]
-		        },
-		        options: {
-		            plugins: {
-		                title: {
-		                    display: true,
-		                    text: `Doanh thu năm ${$('#monthYear').val()}`
-		                },
-		                customCanvasBackgroundColor: { color: '#fff' }
-		            }
-		        },
-		        plugins: [window.chartBgPlugin],
-		    });
+			listContainer.innerHTML = `<li class="list-group-item text-center text-muted">Đang tải...</li>`;
+
+			try {
+				const res = await fetch(`${window.location.origin}/api/branches`)
+;
+				if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+				const branches = await res.json();
+				console.log("✅ Branches loaded:", branches);
+
+				if (!branches || branches.length === 0) {
+					listContainer.innerHTML = `<li class="list-group-item text-center text-muted">Không có chi nhánh nào</li>`;
+					return;
+				}
+
+				const html = branches.map(b => `
+					<li class="list-group-item d-flex justify-content-between align-items-center">
+						<span>${b.name || b.branchName}</span>
+						<button class="btn btn-sm btn-primary" onclick="loadStatisticByBranch(${b.id}, '${b.name || b.branchName}')">Xem</button>
+					</li>
+				`).join("");
+				listContainer.innerHTML = html;
+				console.log("✅ Branch list rendered successfully");
+			} catch (err) {
+				console.error("❌ Error loading branches:", err);
+				listContainer.innerHTML = `<li class="list-group-item text-danger text-center">Không thể tải danh sách</li>`;
+			}
 		}
 
-		function loadChartInTime(labelList, dataList) {
-		    let chartStatus = Chart.getChart("revenueInTime");
-		    if (chartStatus) chartStatus.destroy();
-
-		    new Chart($('#revenueInTime'), {
-		        type: 'bar',
-		        data: {
-		            labels: labelList,
-		            datasets: [{
-		                label: 'Doanh thu',
-		                data: dataList,
-		                borderColor: 'rgb(54, 162, 235)',
-		                backgroundColor: '#ff6384'
-		            }]
-		        },
-		        options: {
-		            plugins: {
-		                title: { display: true, text: 'Biểu đồ doanh thu' },
-		                customCanvasBackgroundColor: { color: '#fff' }
-		            }
-		        },
-		        plugins: [window.chartBgPlugin],
-		    });
+		// ✅ Load statistics for selected branch
+		// ✅ Load statistics for selected branch
+		async function loadStatisticByBranch(branchId, branchName) {
+		    console.log("✅ Loading statistic for branch:", branchId, branchName);
+		
+		    // ✅ Lưu branchId toàn cục để các chart khác dùng
+		    window.selectedBranchId = branchId;
+		    window.selectedBranchName = branchName;
+		
+		    // ✅ Cập nhật nhãn đang xem (nếu muốn hiển thị trên giao diện)
+		    const labelEl = document.getElementById("currentBranchLabel");
+		    if (labelEl) {
+		        labelEl.innerText = `Đang xem thống kê cho chi nhánh: ${branchName}`;
+		        labelEl.style.color = "#007bff";
+		        labelEl.style.fontWeight = "600";
+		    }
+		
+		    try {
+		        // Close modal using Bootstrap 5 native API
+		        const modalEl = document.getElementById("branchModal");
+		        try {
+		            const modal = (bootstrap?.Modal?.getInstance?.(modalEl)) || new bootstrap.Modal(modalEl);
+		            modal.hide();
+		        } catch (e) {
+		            console.warn("⚠️ Không thể ẩn modal bằng Bootstrap, fallback jQuery:", e);
+		            $("#branchModal").modal("hide");
+		        }
+		
+		        Toastify({
+		            text: "Đang tải thống kê cho chi nhánh: " + branchName,
+		            style: { background: "#007bff" },
+		            duration: 3000
+		        }).showToast();
+		
+		        const res = await fetch(`/admin/api/thong-ke-doanh-thu?branchId=${branchId}`);
+		        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+		
+		        const data = await res.json();
+		        console.log("✅ Statistic data loaded:", data);
+		
+		        // ✅ Cập nhật 4 ô doanh thu
+		        updateRevenue("revenueAll", data.revenueAll);
+		        updateRevenue("revenueToday", data.revenueToday);
+		        updateRevenue("revenueWeek", data.revenueWeek);
+		        updateRevenue("revenueMonth", data.revenueMonth);
+		
+		        // ✅ Gọi vẽ lại biểu đồ theo chi nhánh
+		        callApiGetInMonth($('#month').val(), $('#year').val(), branchId);
+		        callApiGetInYear($('#monthYear').val(), branchId);
+		        callApiStatisInTime($('#dateStart').val(), $('#dateEnd').val(), branchId);
+		        callApiStatisticInMonth($('#monthStart').val(), $('#monthEnd').val(), branchId);
+		
+		        Toastify({
+		            text: "✅ Đã tải xong thống kê cho " + branchName,
+		            style: { background: "green" },
+		            duration: 3000
+		        }).showToast();
+		
+		        console.log("✅ Statistic updated successfully");
+		    } catch (err) {
+		        console.error("❌ Error loading statistic:", err);
+		        Toastify({
+		            text: "❌ Không thể tải dữ liệu! " + err.message,
+		            style: { background: "red" },
+		            duration: 3000
+		        }).showToast();
+		    }
 		}
 
-		// ===============================================================
-		// ✅ 3️⃣ Các hàm gọi API
-		// ===============================================================
-		function callApiGetInMonth(month, year, branchId = null) {
-		    const url = branchId
-		        ? `/api/get-statistic-revenue-day-in-month?month=${month}&year=${year}&branchId=${branchId}`
-		        : `/api/get-statistic-revenue-day-in-month?month=${month}&year=${year}`;
 
-		    $.getJSON(url, function (data) {
-		        const labels = data.map(i => i.date);
-		        const values = data.map(i => i.revenue);
-		        loadChart(labels, values);
-		    });
+		// ✅ Update revenue display
+		function updateRevenue(id, value) {
+			const el = document.getElementById(id);
+			if (el) {
+				el.innerText = (value || 0).toLocaleString("vi-VN");
+				console.log(`✅ Updated ${id}: ${value}`);
+			} else {
+				console.warn(`⚠️ Element with id='${id}' not found`);
+			}
 		}
-
-		function callApiGetInYear(year, branchId = null) {
-		    const url = branchId
-		        ? `/api/get-statistic-revenue-month-in-year?year=${year}&branchId=${branchId}`
-		        : `/api/get-statistic-revenue-month-in-year?year=${year}`;
-
-		    $.getJSON(url, function (data) {
-		        const labels = data.map(i => i.month);
-		        const values = data.map(i => i.revenue);
-		        loadChartYear(labels, values);
-		    });
-		}
-
-		function callApiStatisInTime(startDate, toDate, branchId = null) {
-		    const url = branchId
-		        ? `/api/get-statistic-revenue-day-from-time?fromDate=${startDate}&toDate=${toDate}&branchId=${branchId}`
-		        : `/api/get-statistic-revenue-day-from-time?fromDate=${startDate}&toDate=${toDate}`;
-
-		    $.getJSON(url, function (data) {
-		        const labels = data.map(i => i.date);
-		        const values = data.map(i => i.revenue);
-		        loadChartInTime(labels, values);
-		    });
-		}
-
-		function callApiStatisticInMonth(startMonth, toMonth, branchId = null) {
-		    const url = branchId
-		        ? `/api/get-statistic-revenue-month-from-time?fromMonth=${startMonth}&toMonth=${toMonth}&branchId=${branchId}`
-		        : `/api/get-statistic-revenue-month-from-time?fromMonth=${startMonth}&toMonth=${toMonth}`;
-
-		    $.getJSON(url, function (data) {
-		        const labels = data.map(i => i.month);
-		        const values = data.map(i => i.revenue);
-		        loadChartInTime(labels, values);
-		    });
-		}
-
-		// ===============================================================
-		// ✅ 4️⃣ Gán global (fix lỗi not defined)
-		// ===============================================================
-		window.callApiGetInMonth = callApiGetInMonth;
-		window.callApiGetInYear = callApiGetInYear;
-		window.callApiStatisInTime = callApiStatisInTime;
-		window.callApiStatisticInMonth = callApiStatisticInMonth;
-
-		// ===============================================================
-		// ✅ 5️⃣ Các hàm phụ & Toastify helper
-		// ===============================================================
-		function showToast(msg, color = "red") {
-		    Toastify({
-		        text: msg,
-		        style: { background: color, color: "white" },
-		        duration: 3000
-		    }).showToast();
-		}
+		
+		
 	</script>
 </body>
 </html>

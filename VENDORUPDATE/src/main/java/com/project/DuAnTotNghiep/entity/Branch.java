@@ -1,5 +1,6 @@
 package com.project.DuAnTotNghiep.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import org.hibernate.annotations.Nationalized;
 
@@ -44,8 +45,10 @@ public class Branch implements Serializable {
     private boolean isActive = true;
 
     @OneToOne(mappedBy = "branch", fetch = FetchType.LAZY)
+    @JsonIgnore
     private Account vendorAccount;
 
     @OneToMany(mappedBy = "branch", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JsonIgnore
     private List<BranchInventory> inventories;
 }

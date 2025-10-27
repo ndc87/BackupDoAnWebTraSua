@@ -17,6 +17,8 @@ import com.project.DuAnTotNghiep.utils.RandomUtils;
 import com.project.DuAnTotNghiep.utils.UserLoginUtil;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import com.project.DuAnTotNghiep.repository.BranchRepository; 
+
 
 import com.project.DuAnTotNghiep.dto.Order.ToppingOrderDto;
 import com.project.DuAnTotNghiep.repository.BillDetailToppingRepository;
@@ -40,6 +42,8 @@ public class CartServiceImpl implements CartService {
     private final PaymentRepository paymentRepository;
     private final PaymentMethodRepository paymentMethodRepository;
     private final BillDetailToppingRepository billDetailToppingRepository;
+    private final BranchRepository branchRepository;
+
 
     private final AtomicLong invoiceCounter = new AtomicLong(1);
 
@@ -55,7 +59,9 @@ public class CartServiceImpl implements CartService {
             DiscountCodeRepository discountCodeRepository,
             PaymentRepository paymentRepository,
             PaymentMethodRepository paymentMethodRepository,
-            BillDetailToppingRepository billDetailToppingRepository
+            BillDetailToppingRepository billDetailToppingRepository,
+            BranchRepository branchRepository // ✅ thêm vào constructor
+
     ) {
         this.cartRepository = cartRepository;
         this.productDiscountRepository = productDiscountRepository;
@@ -69,6 +75,8 @@ public class CartServiceImpl implements CartService {
         this.paymentRepository = paymentRepository;
         this.paymentMethodRepository = paymentMethodRepository;
         this.billDetailToppingRepository = billDetailToppingRepository;
+        this.branchRepository = branchRepository; // ✅ gán giá trị
+
     }
 
 	
@@ -209,6 +217,13 @@ public class CartServiceImpl implements CartService {
 	    bill.setStatus(BillStatus.CHO_XAC_NHAN);
 	    bill.setPromotionPrice(orderDto.getPromotionPrice());
 	    bill.setReturnStatus(false);
+	    if (orderDto.getBranchId() != null) {
+	        Branch branch = branchRepository.findById(orderDto.getBranchId())
+	            .orElseThrow(() -> new NotFoundException("Chi nhánh không tồn tại"));
+	        bill.setBranch(branch);
+	        System.out.println("🏬 Gắn branch vào bill: " + branch.getBranchName());
+	    }
+
 
 	    if (UserLoginUtil.getCurrentLogin() != null) {
 	        Account account = UserLoginUtil.getCurrentLogin();
@@ -364,6 +379,13 @@ public class CartServiceImpl implements CartService {
 	    bill.setStatus(BillStatus.HOAN_THANH);
 	    bill.setPromotionPrice(orderDto.getPromotionPrice());
 	    bill.setReturnStatus(false);
+	    
+	    if (orderDto.getBranchId() != null) {
+	        Branch branch = branchRepository.findById(orderDto.getBranchId())
+	            .orElseThrow(() -> new NotFoundException("Chi nhánh không tồn tại"));
+	        bill.setBranch(branch);
+	    }
+
 
 	    if (orderDto.getCustomer() != null && orderDto.getCustomer().getId() != null) {
 	        Customer customer = customerRepository.findById(orderDto.getCustomer().getId())
@@ -458,15 +480,18 @@ public class CartServiceImpl implements CartService {
 	    paymentRepository.save(payment);
 
 	    return new OrderDto(
-	            billNew.getId().toString(),
-	            orderDto.getCustomer(),
-	            billNew.getInvoiceType(),
-	            billNew.getStatus(),
-	            billNew.getPaymentMethod().getId(),
-	            billNew.getBillingAddress(),
-	            billNew.getPromotionPrice(),
-	            null, null, null
-	    );
+	    	    billNew.getId().toString(),     // billId
+	    	    orderDto.getCustomer(),         // customer
+	    	    billNew.getInvoiceType(),       // invoiceType
+	    	    billNew.getStatus(),            // billStatus
+	    	    billNew.getPaymentMethod().getId(), // paymentMethodId
+	    	    billNew.getBillingAddress(),    // billingAddress
+	    	    billNew.getPromotionPrice(),    // promotionPrice
+	    	    null,                           // voucherId
+	    	    null,                           // orderId
+	    	    billNew.getBranch() != null ? billNew.getBranch().getId() : null, // ✅ branchId (trước orderDetailDtos)
+	    	    null                            // ✅ orderDetailDtos cuối cùng
+	    	);
 	}
 
 

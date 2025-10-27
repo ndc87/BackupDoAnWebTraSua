@@ -64,7 +64,7 @@ public class Bill implements Serializable {
     @JoinColumn(name = "discount_code_id")
     private DiscountCode discountCode;
 
-    @ManyToOne
-    @JoinColumn(name = "branch_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "branch_id", nullable = true)
     private Branch branch;
 }

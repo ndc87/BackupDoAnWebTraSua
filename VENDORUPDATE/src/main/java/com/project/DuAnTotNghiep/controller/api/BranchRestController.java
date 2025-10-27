@@ -20,7 +20,6 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/api/branches")
-@CrossOrigin(origins = "*")
 public class BranchRestController {
 
     private static final Logger logger = LoggerFactory.getLogger(BranchRestController.class);
@@ -53,43 +52,16 @@ public class BranchRestController {
             Branch branch = branchOpt.get();
             Map<String, Object> response = new HashMap<>();
 
-            // 1. Lấy doanh thu 7 ngày gần nhất
-            List<Object[]> dailyRevenueData = branchRepository.getDailyRevenueByBranch(branchId);
+            // 1. Tạo dữ liệu doanh thu 7 ngày (mặc định 0 vì không có quan hệ branch-bill)
+            LocalDate today = LocalDate.now();
             List<String> revenueDates = new ArrayList<>();
             List<Double> revenueValues = new ArrayList<>();
-
-            // Tạo dữ liệu đầy đủ 7 ngày (từ -6 ngày đến hôm nay)
-            LocalDate today = LocalDate.now();
-            Map<LocalDate, Double> revenueMap = new HashMap<>();
             
-            // Khởi tạo tất cả 7 ngày với giá trị 0
             for (int i = 6; i >= 0; i--) {
                 LocalDate date = today.minusDays(i);
-                revenueMap.put(date, 0.0);
+                revenueDates.add(date.toString());
+                revenueValues.add(0.0);  // Mặc định là 0 vì không có dữ liệu
             }
-            
-            // Cập nhật dữ liệu từ database nếu có
-            if (dailyRevenueData != null && !dailyRevenueData.isEmpty()) {
-                for (Object[] row : dailyRevenueData) {
-                    if (row[0] != null && row[1] != null) {
-                        try {
-                            LocalDate date = LocalDate.parse(row[0].toString());
-                            double revenue = ((Number) row[1]).doubleValue();
-                            revenueMap.put(date, revenue);
-                        } catch (Exception ex) {
-                            logger.error("Error parsing revenue data", ex);
-                        }
-                    }
-                }
-            }
-            
-            // Sắp xếp theo ngày và thêm vào list
-            revenueMap.entrySet().stream()
-                    .sorted(Map.Entry.comparingByKey())
-                    .forEach(entry -> {
-                        revenueDates.add(entry.getKey().toString());
-                        revenueValues.add(entry.getValue());
-                    });
 
             response.put("branchId", branchId);
             response.put("branchName", branch.getBranchName());
@@ -99,30 +71,26 @@ public class BranchRestController {
 
             logger.info("Revenue dates: {}, Revenue values: {}", revenueDates, revenueValues);
 
-            // 2. Lấy 10 hóa đơn gần nhất của chi nhánh
-            Pageable pageable = PageRequest.of(0, 20, Sort.by("createDate").descending());
-            List<Bill> allBills = billRepository.findAll(pageable).getContent();
+            // 2. Lấy 10 hóa đơn gần nhất (tất cả, vì không có liên kết chi nhánh)
+            Pageable pageable = PageRequest.of(0, 10, Sort.by("createDate").descending());
+            List<Bill> bills = billRepository.findAll(pageable).getContent();
             
             List<Map<String, Object>> billList = new ArrayList<>();
-            for (Bill bill : allBills) {
+            for (Bill bill : bills) {
                 try {
-                    if (bill.getBranch() != null && bill.getBranch().getId() != null && bill.getBranch().getId().equals(branchId)) {
-                        Map<String, Object> billMap = new HashMap<>();
-                        billMap.put("id", bill.getId());
-                        billMap.put("code", bill.getCode() != null ? bill.getCode() : "N/A");
-                        billMap.put("createDate", bill.getCreateDate() != null ? bill.getCreateDate().toLocalDate().toString() : "");
-                        billMap.put("totalAmount", bill.getAmount() != null ? bill.getAmount() : 0.0);
-                        billMap.put("status", bill.getStatus() != null ? bill.getStatus().toString() : "N/A");
-                        billList.add(billMap);
-                        
-                        if (billList.size() >= 10) break;
-                    }
+                    Map<String, Object> billMap = new HashMap<>();
+                    billMap.put("id", bill.getId());
+                    billMap.put("code", bill.getCode() != null ? bill.getCode() : "N/A");
+                    billMap.put("createDate", bill.getCreateDate() != null ? bill.getCreateDate().toLocalDate().toString() : "");
+                    billMap.put("totalAmount", bill.getAmount() != null ? bill.getAmount() : 0.0);
+                    billMap.put("status", bill.getStatus() != null ? bill.getStatus().toString() : "N/A");
+                    billList.add(billMap);
                 } catch (Exception ex) {
                     logger.error("Error processing bill: {}", bill.getId(), ex);
                 }
             }
 
-            logger.info("Found {} bills for branch {}", billList.size(), branchId);
+            logger.info("Found {} bills", billList.size());
             response.put("bills", billList);
             return ResponseEntity.ok(response);
 

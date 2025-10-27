@@ -4,6 +4,8 @@ import com.project.DuAnTotNghiep.entity.BranchInventory;
 import com.project.DuAnTotNghiep.entity.Branch;
 import com.project.DuAnTotNghiep.entity.ProductDetail;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -16,4 +18,55 @@ public interface BranchInventoryRepository extends JpaRepository<BranchInventory
     List<BranchInventory> findByProductDetailId(Long productDetailId);
     List<BranchInventory> findByBranch(Branch branch);
     List<BranchInventory> findByProductDetail(ProductDetail productDetail);
+
+    /**
+     * Lấy sản phẩm còn hàng của chi nhánh
+     */
+    @Query("""
+        SELECT bi FROM BranchInventory bi 
+        WHERE bi.branch.id = :branchId 
+        AND bi.quantity > 0 
+        AND bi.isActive = true
+        ORDER BY bi.productDetail.product.createDate DESC
+    """)
+    List<BranchInventory> findActiveProductsByBranch(@Param("branchId") Long branchId);
+
+    /**
+     * Lấy sản phẩm theo danh mục của chi nhánh
+     */
+    @Query("""
+        SELECT bi FROM BranchInventory bi 
+        WHERE bi.branch.id = :branchId 
+        AND bi.productDetail.product.category.id = :categoryId
+        AND bi.quantity > 0 
+        AND bi.isActive = true
+    """)
+    List<BranchInventory> findProductsByBranchAndCategory(
+        @Param("branchId") Long branchId, 
+        @Param("categoryId") Long categoryId
+    );
+
+    /**
+     * Kiểm tra xem chi nhánh có sản phẩm này không và còn hàng
+     */
+    @Query("""
+        SELECT CASE WHEN bi.quantity > 0 THEN true ELSE false END 
+        FROM BranchInventory bi
+        WHERE bi.branch.id = :branchId 
+        AND bi.productDetail.id = :productDetailId
+    """)
+    boolean hasProductInStock(@Param("branchId") Long branchId, @Param("productDetailId") Long productDetailId);
+
+    /**
+     * Lấy số lượng sản phẩm trong kho của chi nhánh
+     */
+    @Query("""
+        SELECT COALESCE(bi.quantity, 0) FROM BranchInventory bi
+        WHERE bi.branch.id = :branchId
+        AND bi.productDetail.id = :productDetailId
+    """)
+    Integer getQuantityByBranchAndProductDetail(
+        @Param("branchId") Long branchId,
+        @Param("productDetailId") Long productDetailId
+    );
 }

@@ -22,5 +22,7 @@ public class OrderDto {
     private double promotionPrice;
     private Long voucherId;
     private String orderId;
+    private Long branchId;
+
     private List<OrderDetailDto> orderDetailDtos;
 }

@@ -28,19 +28,7 @@ public class WebSecurityConfig {
 	public static class AppConfiguration {
 		@Bean
 		public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-			http
-					// ✅ Bật CORS trước
-					.cors().configurationSource(request -> {
-						var cors = new org.springframework.web.cors.CorsConfiguration();
-						cors.setAllowedOriginPatterns(java.util.List.of("http://localhost:8080", // nếu FE chạy chung
-																									// host với BE
-								"http://127.0.0.1:8080", "http://localhost:5173" // nếu bạn chạy Vite/React local FE
-						));
-						cors.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-						cors.setAllowedHeaders(java.util.List.of("*"));
-						cors.setAllowCredentials(true); // ✅ cho phép gửi cookie/token
-						return cors;
-					}).and()
+			http.cors().and()
 
 					// Tắt CSRF
 					.csrf().disable().authorizeRequests()
@@ -105,6 +93,8 @@ public class WebSecurityConfig {
 			return (web) -> web.ignoring().antMatchers("/img/**", "/js/**", "/css/**", "/fonts/**", "/plugins/**",
 					"/vendor/**", "/static/**", "/webjars/**", "/images/**", "/favicon.ico", "/error");
 		}
+
+		
 
 	}
 }

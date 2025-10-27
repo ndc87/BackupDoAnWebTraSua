@@ -20,7 +20,6 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/api/admin/branches")
-@CrossOrigin(origins = "*")
 public class AdminAccountBranchController {
 
     private static final Logger logger = LoggerFactory.getLogger(AdminAccountBranchController.class);

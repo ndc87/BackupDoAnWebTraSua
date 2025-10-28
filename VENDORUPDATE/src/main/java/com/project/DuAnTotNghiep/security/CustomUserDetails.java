@@ -24,11 +24,23 @@ public class CustomUserDetails implements UserDetails {
 	    Role role = account.getRole();
 	    List<SimpleGrantedAuthority> authorities = new ArrayList<>();
 
-	    // DB lưu Enum ROLE_ADMIN, ROLE_USER, ROLE_VENDOR, ROLE_GUEST
-	    authorities.add(new SimpleGrantedAuthority(role.getName().name()));
+	    if (role != null) {
+	        String roleName = role.getName().name();
+
+	        // 🔧 Nếu đã có "ROLE_" thì giữ nguyên, không thêm nữa
+	        if (!roleName.startsWith("ROLE_")) {
+	            roleName = "ROLE_" + roleName;
+	        }
+
+	        authorities.add(new SimpleGrantedAuthority(roleName));
+	        System.out.println("🔹 [CustomUserDetails] Role loaded (normalized): " + roleName);
+	    } else {
+	        System.out.println("⚠️ [CustomUserDetails] No role found for: " + account.getEmail());
+	    }
 
 	    return authorities;
 	}
+
 
 
 	@Override

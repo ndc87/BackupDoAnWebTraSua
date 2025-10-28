@@ -102,9 +102,16 @@ var isUserLoggedIn = /*[[${#authorization.expression('isAuthenticated()')}]]*/ f
 									th:unless="${#authorization.expression('isAuthenticated()')}">Đăng
 									ký</a> <a th:href="@{/profile}"
 									th:if="${#authorization.expression('isAuthenticated()')}">Thông
-									tin</a> <a th:href="@{/admin/thong-ke-doanh-thu}"
-									sec:authorize="hasAnyRole('ROLE_ADMIN', 'ROLE_VENDOR')">Trang
-									quản lý</a> <a th:href="@{/cart-status}"
+									tin</a>
+								<!-- Nếu là admin -->
+								<a th:href="@{/admin/thong-ke-doanh-thu}"
+									sec:authorize="hasRole('ROLE_ADMIN')"> Trang quản lý
+									(Admin) </a>
+
+								<!-- Nếu là vendor -->
+								<a th:href="@{/vendor-page/thong-ke-doanh-thu}"
+									sec:authorize="hasRole('ROLE_VENDOR')"> Trang quản lý
+									(Vendor) </a> <a th:href="@{/cart-status}"
 									th:if="${#authorization.expression('isAuthenticated()')}">Đơn
 									hàng</a> <a th:href="@{/user_logout}"
 									th:if="${#authorization.expression('isAuthenticated()')}">Đăng
@@ -150,7 +157,7 @@ var isUserLoggedIn = /*[[${#authorization.expression('isAuthenticated()')}]]*/ f
 					<!-- Icon header -->
 					<div class="wrap-icon-header flex-w flex-r-m">
 
-						
+
 
 						<!-- 🛒 Giỏ hàng -->
 						<div
@@ -324,84 +331,92 @@ var isUserLoggedIn = /*[[${#authorization.expression('isAuthenticated()')}]]*/ f
 	</div>
 
 	<footer class="bg3 p-t-75 p-b-32">
-  <div class="container">
-    <div class="row">
-      <!-- Cột 1: Danh mục sản phẩm -->
-      <div class="col-sm-6 col-lg-3 p-b-50">
-        <h4 class="stext-301 cl0 p-b-30">Danh mục</h4>
-        <ul>
-          <li class="p-b-10"><a href="/menu" class="stext-107 cl7 hov-cl1 trans-04">Trà sữa</a></li>
-          <li class="p-b-10"><a href="/menu" class="stext-107 cl7 hov-cl1 trans-04">Trà trái cây</a></li>
-          <li class="p-b-10"><a href="/menu" class="stext-107 cl7 hov-cl1 trans-04">Topping</a></li>
-          <li class="p-b-10"><a href="/menu" class="stext-107 cl7 hov-cl1 trans-04">Combo & Ưu đãi</a></li>
-        </ul>
-      </div>
+		<div class="container">
+			<div class="row">
+				<!-- Cột 1: Danh mục sản phẩm -->
+				<div class="col-sm-6 col-lg-3 p-b-50">
+					<h4 class="stext-301 cl0 p-b-30">Danh mục</h4>
+					<ul>
+						<li class="p-b-10"><a href="/menu"
+							class="stext-107 cl7 hov-cl1 trans-04">Trà sữa</a></li>
+						<li class="p-b-10"><a href="/menu"
+							class="stext-107 cl7 hov-cl1 trans-04">Trà trái cây</a></li>
+						<li class="p-b-10"><a href="/menu"
+							class="stext-107 cl7 hov-cl1 trans-04">Topping</a></li>
+						<li class="p-b-10"><a href="/menu"
+							class="stext-107 cl7 hov-cl1 trans-04">Combo & Ưu đãi</a></li>
+					</ul>
+				</div>
 
-      <!-- Cột 2: Hỗ trợ khách hàng -->
-      <div class="col-sm-6 col-lg-3 p-b-50">
-        <h4 class="stext-301 cl0 p-b-30">Hỗ trợ</h4>
-        <ul>
-          <li class="p-b-10"><a href="/order-tracking" class="stext-107 cl7 hov-cl1 trans-04">Theo dõi đơn hàng</a></li>
-          <li class="p-b-10"><a href="/policy" class="stext-107 cl7 hov-cl1 trans-04">Chính sách đổi trả</a></li>
-          <li class="p-b-10"><a href="/store" class="stext-107 cl7 hov-cl1 trans-04">Hệ thống cửa hàng</a></li>
-          <li class="p-b-10"><a href="/contact" class="stext-107 cl7 hov-cl1 trans-04">Liên hệ / Góp ý</a></li>
-        </ul>
-      </div>
+				<!-- Cột 2: Hỗ trợ khách hàng -->
+				<div class="col-sm-6 col-lg-3 p-b-50">
+					<h4 class="stext-301 cl0 p-b-30">Hỗ trợ</h4>
+					<ul>
+						<li class="p-b-10"><a href="/order-tracking"
+							class="stext-107 cl7 hov-cl1 trans-04">Theo dõi đơn hàng</a></li>
+						<li class="p-b-10"><a href="/policy"
+							class="stext-107 cl7 hov-cl1 trans-04">Chính sách đổi trả</a></li>
+						<li class="p-b-10"><a href="/store"
+							class="stext-107 cl7 hov-cl1 trans-04">Hệ thống cửa hàng</a></li>
+						<li class="p-b-10"><a href="/contact"
+							class="stext-107 cl7 hov-cl1 trans-04">Liên hệ / Góp ý</a></li>
+					</ul>
+				</div>
 
-      <!-- Cột 3: Liên hệ -->
-      <div class="col-sm-6 col-lg-3 p-b-50">
-        <h4 class="stext-301 cl0 p-b-30">Liên hệ</h4>
-        <p class="stext-107 cl7 size-201">
-          Bạn có thắc mắc? Hãy đến quán tại <b>123 Võ Văn Ngân, Thủ Đức, TP.HCM</b><br>
-          Hoặc gọi ngay <b>0899 074 947</b> để được hỗ trợ!
-        </p>
+				<!-- Cột 3: Liên hệ -->
+				<div class="col-sm-6 col-lg-3 p-b-50">
+					<h4 class="stext-301 cl0 p-b-30">Liên hệ</h4>
+					<p class="stext-107 cl7 size-201">
+						Bạn có thắc mắc? Hãy đến quán tại <b>123 Võ Văn Ngân, Thủ Đức,
+							TP.HCM</b><br> Hoặc gọi ngay <b>0899 074 947</b> để được hỗ trợ!
+					</p>
 
-        <div class="p-t-27">
-          <a href="https://facebook.com" class="fs-18 cl7 hov-cl1 trans-04 m-r-16">
-            <i class="fa fa-facebook"></i>
-          </a>
-          <a href="https://instagram.com" class="fs-18 cl7 hov-cl1 trans-04 m-r-16">
-            <i class="fa fa-instagram"></i>
-          </a>
-          <a href="https://tiktok.com" class="fs-18 cl7 hov-cl1 trans-04 m-r-16">
-            <i class="fa fa-music"></i>
-          </a>
-        </div>
-      </div>
+					<div class="p-t-27">
+						<a href="https://facebook.com"
+							class="fs-18 cl7 hov-cl1 trans-04 m-r-16"> <i
+							class="fa fa-facebook"></i>
+						</a> <a href="https://instagram.com"
+							class="fs-18 cl7 hov-cl1 trans-04 m-r-16"> <i
+							class="fa fa-instagram"></i>
+						</a> <a href="https://tiktok.com"
+							class="fs-18 cl7 hov-cl1 trans-04 m-r-16"> <i
+							class="fa fa-music"></i>
+						</a>
+					</div>
+				</div>
 
-      <!-- Cột 4: Nhận ưu đãi -->
-      <div class="col-sm-6 col-lg-3 p-b-50">
-        <h4 class="stext-301 cl0 p-b-30">Nhận ưu đãi</h4>
-        <p class="stext-107 cl7 size-201">
-          Đăng ký email để nhận khuyến mãi và voucher mới nhất từ AloTrà 🍹
-        </p>
+				<!-- Cột 4: Nhận ưu đãi -->
+				<div class="col-sm-6 col-lg-3 p-b-50">
+					<h4 class="stext-301 cl0 p-b-30">Nhận ưu đãi</h4>
+					<p class="stext-107 cl7 size-201">Đăng ký email để nhận khuyến
+						mãi và voucher mới nhất từ AloTrà 🍹</p>
 
-        <form>
-          <div class="wrap-input1 w-full p-b-4">
-            <input class="input1 bg-none plh1 stext-107 cl7" 
-                   type="email" name="email" 
-                   placeholder="Nhập email của bạn...">
-            <div class="focus-input1 trans-04"></div>
-          </div>
+					<form>
+						<div class="wrap-input1 w-full p-b-4">
+							<input class="input1 bg-none plh1 stext-107 cl7" type="email"
+								name="email" placeholder="Nhập email của bạn...">
+							<div class="focus-input1 trans-04"></div>
+						</div>
 
-          <div class="p-t-18">
-            <button class="flex-c-m stext-101 cl0 size-103 bg1 bor1 hov-btn2 p-lr-15 trans-04">
-              Đăng ký
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+						<div class="p-t-18">
+							<button
+								class="flex-c-m stext-101 cl0 size-103 bg1 bor1 hov-btn2 p-lr-15 trans-04">
+								Đăng ký</button>
+						</div>
+					</form>
+				</div>
+			</div>
 
-    <!-- Dòng bản quyền -->
-    <div class="p-t-40">
-      <p class="stext-107 cl6 txt-center">
-        © <script>document.write(new Date().getFullYear());</script> AloTrà — 
-        Hương vị ngọt ngào, năng lượng mỗi ngày 🍃
-      </p>
-    </div>
-  </div>
-</footer>
+			<!-- Dòng bản quyền -->
+			<div class="p-t-40">
+				<p class="stext-107 cl6 txt-center">
+					©
+					<script>document.write(new Date().getFullYear());</script>
+					AloTrà — Hương vị ngọt ngào, năng lượng mỗi ngày 🍃
+				</p>
+			</div>
+		</div>
+	</footer>
 
 
 

@@ -573,21 +573,21 @@ public interface BillRepository extends JpaRepository<Bill, Long>, JpaSpecificat
 		        @Param("toDate") LocalDateTime toDate,
 		        @Param("branchId") Long branchId);
 	
-	@Query(value = """
-		    SELECT TOP 10 
-		        p.name AS productName,
-		        SUM(bd.quantity) AS totalQuantity,
-		        SUM(bd.price * bd.quantity) AS totalRevenue
-		    FROM bill b
-		    JOIN bill_detail bd ON b.id = bd.bill_id
-		    JOIN product_detail pd ON bd.product_detail_id = pd.id
-		    JOIN product p ON pd.product_id = p.id
-		    WHERE b.status = 'HOAN_THANH' 
-		      AND b.branch_id = :branchId
-		    GROUP BY p.name
-		    ORDER BY totalQuantity DESC
-		""", nativeQuery = true)
-		List<BestSellerProduct> getBestSellerProductByBranch(@Param("branchId") Long branchId);
+		@Query(value = """
+			    SELECT TOP 10 
+			        p.name AS productName,
+			        SUM(bd.quantity) AS totalQuantity,
+			        SUM(bd.moment_price * bd.quantity) AS totalRevenue
+			    FROM bill b
+			    JOIN bill_detail bd ON b.id = bd.bill_id
+			    JOIN product_detail pd ON bd.product_detail_id = pd.id
+			    JOIN product p ON pd.product_id = p.id
+			    WHERE b.status = 'HOAN_THANH' 
+			      AND b.branch_id = :branchId
+			    GROUP BY p.name
+			    ORDER BY totalQuantity DESC
+			""", nativeQuery = true)
+			List<BestSellerProduct> getBestSellerProductByBranch(@Param("branchId") Long branchId);
 
 
 

@@ -14,6 +14,7 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 import org.springframework.security.web.authentication.SavedRequestAwareAuthenticationSuccessHandler;
 import org.springframework.security.web.firewall.HttpFirewall;
 import org.springframework.security.web.firewall.StrictHttpFirewall;
+import javax.servlet.http.HttpServletResponse;
 
 @Configuration
 @EnableWebSecurity
@@ -40,6 +41,18 @@ public class WebSecurityConfig {
 							"/js/**", "/images/**", "/webjars/**")
 					.permitAll()
 
+					// Public API endpoints
+					.antMatchers("/api/public/**")
+					.permitAll()
+
+					// API endpoints requiring authentication
+					.antMatchers("/api/admin/**")
+					.hasAnyRole("ADMIN", "VENDOR")
+					.antMatchers("/api/vendor/**")
+					.hasAnyRole("VENDOR", "ADMIN")
+					.antMatchers("/api/**")
+					.authenticated()
+
 					// Quyền của User và Vendor (User chức năng cơ bản, Vendor có thêm các chức năng
 					// shop)
 					.antMatchers("/profile/**", "/orders/**", "/checkout/**", "/comment/**", "/discount/**",
@@ -59,10 +72,30 @@ public class WebSecurityConfig {
 
 					// Các chức năng chỉ dành cho ADMIN (quản lý user, danh mục, vận chuyển, chiết
 					// khấu app, giảm phí vận chuyển,...)
-					.antMatchers("/admin/**", "/management/**", "/system/**").hasRole("ADMIN")
+					.antMatchers("/admin/**", "/management/**", "/system/**").hasAnyRole("ADMIN","VENDOR")
+					.antMatchers("/admin-only/**").hasRole("ADMIN")
+
 
 					// Các request khác thì cho phép (để login form không bị chặn)
 					.anyRequest().permitAll()
+
+					.and().exceptionHandling()
+					// Handle authentication failures (401 Unauthorized)
+					.authenticationEntryPoint((req, res, ex) -> {
+						if (req.getRequestURI().startsWith("/api/")) {
+							res.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
+						} else {
+							res.sendRedirect("/user-login");
+						}
+					})
+					// Handle authorization failures (403 Forbidden)
+					.accessDeniedHandler((req, res, ex) -> {
+						if (req.getRequestURI().startsWith("/api/")) {
+							res.sendError(HttpServletResponse.SC_FORBIDDEN, "Access Denied");
+						} else {
+							res.sendRedirect("/user-login");
+						}
+					})
 
 					.and().formLogin().loginPage("/user-login") // trang login
 					.loginProcessingUrl("/user_login") // action form login

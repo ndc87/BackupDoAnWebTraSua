@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.*;
 
 @RestController
-@RequestMapping("/api/admin/branches")
+@RequestMapping("/api/admin/accounts-branches")
 public class AdminAccountBranchController {
 
     private static final Logger logger = LoggerFactory.getLogger(AdminAccountBranchController.class);

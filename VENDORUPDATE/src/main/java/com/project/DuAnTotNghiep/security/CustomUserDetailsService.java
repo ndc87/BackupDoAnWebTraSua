@@ -13,17 +13,26 @@ import org.springframework.stereotype.Service;
 public class CustomUserDetailsService implements UserDetailsService {
 
     @Autowired
-    private AccountRepository acccountRepository;
+    private AccountRepository accountRepository; // ✅ sửa đúng tên biến
     @Autowired
     private RoleRepository roleRepository;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        Account account = acccountRepository.findByEmail(username);
+        System.out.println("🔍 [CustomUserDetailsService] Đang xác thực user: " + username);
+
+        Account account = accountRepository.findByEmail(username);
 
         if (account != null) {
+            System.out.println("✅ [CustomUserDetailsService] Đăng nhập thành công:");
+            System.out.println("   📧 Email: " + account.getEmail());
+            System.out.println("   🧩 Role: " + (account.getRole() != null ? account.getRole().getName() : "NULL"));
+            System.out.println("   🔒 Locked: " + !account.isNonLocked());
+            System.out.println("   🕒 Enabled: " + account.isEnabled());
             return new CustomUserDetails(account);
         }
-        throw new UsernameNotFoundException("Không tìm thấy tài khoản có username là: " + username);
+
+        System.out.println("❌ [CustomUserDetailsService] Không tìm thấy tài khoản có email: " + username);
+        throw new UsernameNotFoundException("Không tìm thấy tài khoản có email: " + username);
     }
 }

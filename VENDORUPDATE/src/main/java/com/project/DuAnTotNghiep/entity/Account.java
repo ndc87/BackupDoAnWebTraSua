@@ -1,7 +1,6 @@
 package com.project.DuAnTotNghiep.entity;
 
 import lombok.*;
-import org.hibernate.annotations.Nationalized;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import javax.persistence.*;
@@ -13,10 +12,10 @@ import java.util.Date;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-
 @Entity
 @Table(name = "Account")
 public class Account implements Serializable {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -31,18 +30,26 @@ public class Account implements Serializable {
     private String password;
     private LocalDateTime createDate;
     private LocalDateTime updateDate;
-    private boolean isNonLocked;
+
+    // ✅ Mặc định tài khoản không bị khóa
+    @Column(nullable = false)
+    private boolean isNonLocked = true;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "customer_id", nullable = true)
     private Customer customer;
 
-
-    @ManyToOne
-    @JoinColumn(name = "roleId")
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "roleId", nullable = false)
     private Role role;
 
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "branch_id", nullable = true)
     private Branch branch;
+
+    // ⚠️ Giữ phương thức này để Spring không crash khi gọi isEnabled()
+    // nhưng luôn trả true (vì DB không có cột enabled)
+    public boolean isEnabled() {
+        return true;
+    }
 }

@@ -19,17 +19,18 @@ public interface BranchInventoryRepository extends JpaRepository<BranchInventory
     List<BranchInventory> findByBranch(Branch branch);
     List<BranchInventory> findByProductDetail(ProductDetail productDetail);
 
-    /**
-     * Lấy sản phẩm còn hàng của chi nhánh
-     */
-    @Query("""
-        SELECT bi FROM BranchInventory bi 
-        WHERE bi.branch.id = :branchId 
-        AND bi.quantity > 0 
-        AND bi.isActive = true
-        ORDER BY bi.productDetail.product.createDate DESC
-    """)
-    List<BranchInventory> findActiveProductsByBranch(@Param("branchId") Long branchId);
+    @Query(value = """
+    	    SELECT bi.*
+    	    FROM branch_inventory bi
+    	    JOIN product_detail pd ON bi.product_detail_id = pd.id
+    	    JOIN product p ON pd.product_id = p.id
+    	    WHERE bi.branch_id = :branchId
+    	      AND bi.quantity > 0
+    	      AND bi.is_active = 1
+    	    ORDER BY p.create_date DESC
+    	""", nativeQuery = true)
+    	List<BranchInventory> findActiveProductsByBranch(@Param("branchId") Long branchId);
+
 
     /**
      * Lấy sản phẩm theo danh mục của chi nhánh

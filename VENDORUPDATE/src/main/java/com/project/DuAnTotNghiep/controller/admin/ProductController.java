@@ -79,7 +79,7 @@ public class ProductController {
 
         Sort sort = Sort.by(sortDirection, sortFieldName);
 
-        Pageable pageable = PageRequest.of(page, pageSize, sort);
+        Pageable pageable = PageRequest.of(page, pageSize);
         Page<ProductSearchDto> listProducts;
 
         if (maSanPham == null || tenSanPham == null || nhanHang == null || chatLieu == null || theLoai == null || trangThai==null) {

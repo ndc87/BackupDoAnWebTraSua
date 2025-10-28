@@ -553,25 +553,29 @@ public interface BillRepository extends JpaRepository<Bill, Long>, JpaSpecificat
 	
 	// ================== DOANH THU THEO CHI NHÁNH ==================
 
-	@Query("""
-		    SELECT SUM(b.amount)
-		    FROM Bill b
-		    WHERE b.branch.id = :branchId
-		      AND b.status = 'HOAN_THANH'
-		""")
-		Double calculateTotalRevenueByBranch(@Param("branchId") Long branchId);
+	// ✅ Tổng doanh thu theo chi nhánh
+	@Query(value = """
+	    SELECT SUM(b.amount)
+	    FROM bill b
+	    WHERE b.branch_id = :branchId
+	      AND b.status = 'HOAN_THANH'
+	""", nativeQuery = true)
+	Double calculateTotalRevenueByBranch(@Param("branchId") Long branchId);
 
-		@Query("""
-		    SELECT SUM(b.amount)
-		    FROM Bill b
-		    WHERE b.createDate BETWEEN :fromDate AND :toDate
-		      AND b.branch.id = :branchId
-		      AND b.status = 'HOAN_THANH'
-		""")
-		Double calculateTotalRevenueFromDateByBranch(
-		        @Param("fromDate") LocalDateTime fromDate,
-		        @Param("toDate") LocalDateTime toDate,
-		        @Param("branchId") Long branchId);
+
+	// ✅ Tổng doanh thu theo ngày và chi nhánh
+	@Query(value = """
+	    SELECT SUM(b.amount)
+	    FROM bill b
+	    WHERE b.create_date BETWEEN :fromDate AND :toDate
+	      AND b.branch_id = :branchId
+	      AND b.status = 'HOAN_THANH'
+	""", nativeQuery = true)
+	Double calculateTotalRevenueFromDateByBranch(
+	        @Param("fromDate") LocalDateTime fromDate,
+	        @Param("toDate") LocalDateTime toDate,
+	        @Param("branchId") Long branchId);
+
 	
 		@Query(value = """
 			    SELECT TOP 10 

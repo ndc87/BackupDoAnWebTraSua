@@ -161,7 +161,7 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
         LEFT JOIN category cat ON cat.id = p.category_id
         WHERE (b.status = 'HOAN_THANH' AND b.create_date BETWEEN :fromDate AND :toDate OR b.status IS NULL)
         GROUP BY p.id, p.code, p.name, brand.name, cat.name
-        ORDER BY p.create_date DESC
+ORDER BY MAX(p.create_date) DESC
         """, nativeQuery = true)
     List<ProductStatistic> getStatisticProduct(String fromDate, String toDate);
 }

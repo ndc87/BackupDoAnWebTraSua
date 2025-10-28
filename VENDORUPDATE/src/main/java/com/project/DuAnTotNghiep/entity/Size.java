@@ -1,5 +1,6 @@
 package com.project.DuAnTotNghiep.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.*;
 import org.hibernate.annotations.Nationalized;
 
@@ -11,6 +12,7 @@ import java.io.Serializable;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"}) // ✅ fix lỗi JSON Lazy
 public class Size implements Serializable {
 
     @Id

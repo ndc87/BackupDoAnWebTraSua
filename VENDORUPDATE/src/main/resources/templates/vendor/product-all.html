@@ -59,6 +59,7 @@
     </div>
 </div>
 
+<th:block layout:fragment="scripts">
 <script th:inline="javascript">
 document.addEventListener("DOMContentLoaded", () => {
     const branchId = /*[[${branch.id}]]*/ 0;
@@ -76,54 +77,55 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
     }
 
-    // ⚙️ Load sản phẩm của chi nhánh
-    function loadProducts(url = `/api/branch-products/branch/${branchId}`) {
+    async function loadProducts(url = `/api/branch-products/branch/${branchId}`) {
         console.log("📡 Fetching:", url);
-        fetch(url)
-            .then(res => res.json())
-            .then(data => {
-                console.log("📦 Dữ liệu nhận được:", data);
-                const products = data.products || data || [];
-                if (products.length === 0) {
-                    tbody.innerHTML = `
-                        <tr><td colspan="6" class="text-muted py-4">
-                            Không có sản phẩm nào trong kho.
-                        </td></tr>`;
-                    return;
-                }
+        try {
+            const res = await fetch(url);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+            console.log("📦 Dữ liệu nhận được:", data);
 
-                tbody.innerHTML = "";
-                products.forEach(p => {
-                    tbody.innerHTML += `
-                        <tr>
-                            <td>${p.productCode || "—"}</td>
-                            <td>
-                                <a href="/vendor-page/product-detail?productDetailId=${p.productDetailId}" 
-                                   class="text-primary font-weight-bold">
-                                    ${p.productName}
-                                </a>
-                            </td>
-                            <td>${p.size?.name || "—"}</td>
-                            <td>${p.color?.name || "—"}</td>
-                            <td>${p.quantity}</td>
-                            <td>
-                                ${p.quantity > 0
-                                    ? '<span class="badge badge-success">Còn hàng</span>'
-                                    : '<span class="badge badge-secondary">Hết hàng</span>'}
-                            </td>
-                        </tr>`;
-                });
-            })
-            .catch(err => {
-                console.error("❌ Lỗi khi tải dữ liệu:", err);
+            const products = Array.isArray(data) ? data : (data.products || []);
+            if (!products.length) {
                 tbody.innerHTML = `
-                    <tr><td colspan="6" class="text-danger py-3">
-                        Lỗi khi tải dữ liệu: ${err.message}
+                    <tr><td colspan="6" class="text-muted py-4">
+                        Không có sản phẩm nào trong kho.
                     </td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = "";
+            products.forEach(p => {
+                tbody.insertAdjacentHTML("beforeend", `
+                    <tr>
+                        <td>${p.productCode || "—"}</td>
+                        <td>
+                            <a href="/vendor-page/product-detail?productDetailId=${p.productDetailId}" 
+                               class="text-primary font-weight-bold">
+                                ${p.productName}
+                            </a>
+                        </td>
+                        <td>${p.size?.name || "—"}</td>
+                        <td>${p.color?.name || "—"}</td>
+                        <td>${p.quantity}</td>
+                        <td>
+                            ${p.quantity > 0
+                                ? '<span class="badge badge-success">Còn hàng</span>'
+                                : '<span class="badge badge-secondary">Hết hàng</span>'}
+                        </td>
+                    </tr>
+                `);
             });
+        } catch (err) {
+            console.error("❌ Lỗi khi tải dữ liệu:", err);
+            tbody.innerHTML = `
+                <tr><td colspan="6" class="text-danger py-3">
+                    Lỗi khi tải dữ liệu: ${err.message}
+                </td></tr>`;
+        }
     }
 
-    // 🗂️ Load danh mục giả lập
+    // Load danh mục + tìm kiếm
     function loadCategories() {
         const demoCats = [
             { id: 1, name: 'Trà sữa' },
@@ -138,7 +140,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // 🔍 Lọc theo keyword
     searchInput.addEventListener("input", function () {
         const keyword = this.value.toLowerCase();
         const rows = tbody.querySelectorAll("tr");
@@ -149,7 +150,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    // 📂 Lọc theo danh mục
     categorySelect.addEventListener("change", function () {
         const catId = this.value;
         const url = catId
@@ -158,11 +158,11 @@ document.addEventListener("DOMContentLoaded", () => {
         loadProducts(url);
     });
 
-    // 🚀 Khi trang load xong
     loadCategories();
     loadProducts();
 });
 </script>
+</th:block>
 
 </body>
 </html>

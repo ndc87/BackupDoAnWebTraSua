@@ -1,5 +1,6 @@
 package com.project.DuAnTotNghiep.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.*;
 import org.hibernate.annotations.Nationalized;
 
@@ -11,6 +12,8 @@ import java.io.Serializable;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+// ✅ Bỏ qua các field tự động sinh bởi Hibernate (tránh lỗi JSON)
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Color implements Serializable {
 
     @Id

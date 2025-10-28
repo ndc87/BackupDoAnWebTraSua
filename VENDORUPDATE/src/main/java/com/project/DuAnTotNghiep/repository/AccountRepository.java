@@ -15,7 +15,7 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
      * ✅ Tìm branch_id của vendor theo email đăng nhập
      * (Cần có quan hệ ManyToOne giữa Account và Branch)
      */
-    @Query("SELECT a.branch.id FROM Account a WHERE a.email = :email")
+    @Query(value = "SELECT branch_id FROM account WHERE email = :email", nativeQuery = true)
     Optional<Long> findBranchIdByEmail(@Param("email") String email);
 
     /**

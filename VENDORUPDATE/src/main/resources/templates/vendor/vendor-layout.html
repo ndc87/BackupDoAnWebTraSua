@@ -131,11 +131,20 @@
 </div>
 
 <th:block th:replace="fragments-vendor::script"></th:block>
+<!-- ⚡️ THÊM ĐOẠN NÀY -->
+<th:block layout:fragment="scripts"></th:block>
 
 <script>
     $('.user-avatar').on('click', function() {
         $('.user-menu').toggleClass('active');
     });
 </script>
+<script>
+    $('.user-avatar').on('click', function() {
+        $('.user-menu').toggleClass('active');
+    });
+</script>
+
+
 </body>
 </html>

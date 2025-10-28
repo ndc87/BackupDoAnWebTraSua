@@ -1,8 +1,6 @@
 package com.project.DuAnTotNghiep.entity;
 
 import lombok.*;
-import org.hibernate.annotations.Nationalized;
-
 import javax.persistence.*;
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -38,12 +36,15 @@ public class BranchInventory implements Serializable {
     @Column(name = "maxQuantity")
     private Integer maxQuantity;
 
-    @Column(name = "isActive") // 👈 đúng với cột trong bảng
+    // ✅ Đúng với tên cột trong DB: isActive (viết hoa A)
+    @Column(name = "isActive")
     private boolean isActive = true;
 
-    @Column(name = "create_date")
+    // ✅ Đúng với DB: createDate (viết hoa D)
+    @Column(name = "createDate")
     private LocalDateTime createDate;
 
-    @Column(name = "update_date")
+    // ✅ Đúng với DB: updateDate (viết hoa D)
+    @Column(name = "updateDate")
     private LocalDateTime updateDate;
 }

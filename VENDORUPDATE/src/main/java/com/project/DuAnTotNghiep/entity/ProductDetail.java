@@ -1,39 +1,42 @@
 package com.project.DuAnTotNghiep.entity;
 
 import lombok.*;
+import org.hibernate.annotations.Nationalized;
 
 import javax.persistence.*;
 import java.io.Serializable;
-import java.time.LocalDateTime;
-import java.util.Date;
-import java.util.List;
 
-@Entity
-@Table(name = "ProductDetail")
-@Data
+@Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
+@Entity
+@Table(name = "product_detail") // ✅ Phải khớp đúng tên bảng trong SQL Server
 public class ProductDetail implements Serializable {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private int quantity;
-    private double price;
+    @Column(length = 100)
     private String barcode;
 
+    private Double price;
+
+    private Integer quantity;
+
+    // ✅ Khóa ngoại đến bảng color
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "productId")
-    private Product product;
-
-    @ManyToOne
-    @JoinColumn(name = "sizeId")
-    private Size size;
-
-    @ManyToOne
-    @JoinColumn(name = "colorId")
+    @JoinColumn(name = "color_id")
     private Color color;
 
-    @OneToOne(mappedBy = "productDetail", cascade = CascadeType.ALL, orphanRemoval = true)
-    private ProductDiscount productDiscount;
+    // ✅ Khóa ngoại đến bảng product
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_id")
+    private Product product;
+
+    // ✅ Khóa ngoại đến bảng size
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "size_id")
+    private Size size;
 }

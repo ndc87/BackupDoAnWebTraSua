@@ -5,21 +5,23 @@ import org.hibernate.annotations.Nationalized;
 
 import javax.persistence.*;
 import java.io.Serializable;
-import java.util.List;
 
 @Entity
-@Table(name = "Color")
+@Table(name = "color")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class Color implements Serializable {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     private String code;
 
     @Nationalized
     private String name;
 
-    private Boolean deleteFlag;
+    @Column(name = "delete_flag", nullable = false)
+    private boolean deleteFlag = false;
 }

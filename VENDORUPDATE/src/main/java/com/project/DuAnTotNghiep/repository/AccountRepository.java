@@ -4,18 +4,22 @@ import com.project.DuAnTotNghiep.entity.Account;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-
 import java.util.List;
+import java.util.Optional;
 
 public interface AccountRepository extends JpaRepository<Account, Long> {
 
     Account findByEmail(String email);
 
     /**
+     * ✅ Tìm branch_id của vendor theo email đăng nhập
+     * (Cần có quan hệ ManyToOne giữa Account và Branch)
+     */
+    @Query("SELECT a.branch.id FROM Account a WHERE a.email = :email")
+    Optional<Long> findBranchIdByEmail(@Param("email") String email);
+
+    /**
      * ✅ Thống kê số lượng tài khoản được tạo theo tháng
-     * @param startDate - ngày bắt đầu (ví dụ: "2025-01-01")
-     * @param endDate - ngày kết thúc (ví dụ: "2025-12-31")
-     * @return List<Object[]> [month, count]
      */
     @Query(value = """
             SELECT 

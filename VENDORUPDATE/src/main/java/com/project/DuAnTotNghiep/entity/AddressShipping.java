@@ -5,7 +5,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.Nationalized;
-import org.springframework.stereotype.Service;
 
 import javax.persistence.*;
 
@@ -13,27 +12,19 @@ import javax.persistence.*;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-
 @Entity
-@Table(name = "AddressShipping")
+@Table(name = "address_shipping") // ✅ trùng tên bảng trong DB
 public class AddressShipping {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-//    private int provinceId;
-//    private int districtId;
-//    private int wardId;
-//
-//
-//    private String street;
-
-
     @Nationalized
-    @Column(nullable = false, length = 150)
+    @Column(name = "address", nullable = false, length = 150)
     private String address;
 
-    @ManyToOne
-    @JoinColumn(name = "customer_id")
-    Customer customer;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "customer_id") // ✅ trùng cột DB
+    private Customer customer;
 }

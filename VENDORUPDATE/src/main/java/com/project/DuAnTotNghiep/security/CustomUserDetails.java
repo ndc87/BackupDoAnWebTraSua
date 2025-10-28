@@ -33,9 +33,7 @@ public class CustomUserDetails implements UserDetails {
 	        }
 
 	        authorities.add(new SimpleGrantedAuthority(roleName));
-	        System.out.println("🔹 [CustomUserDetails] Role loaded (normalized): " + roleName);
 	    } else {
-	        System.out.println("⚠️ [CustomUserDetails] No role found for: " + account.getEmail());
 	    }
 
 	    return authorities;
@@ -73,14 +71,6 @@ public class CustomUserDetails implements UserDetails {
 		return true;
 	}
 
-//    public String getFullName() {
-//        return this.account.getFullName();
-//    }
-//    public String getPhoto() {
-//        return this.account.getPhoto();
-//    }
-//    public Integer getId() {
-//        return this.account.getId();
-//    }
+
 
 }

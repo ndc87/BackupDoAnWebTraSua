@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      layout:decorate="~{vendor/vendor-layout}">
+<head>
+    <title>Kho hàng - Danh sách sản phẩm</title>
+    <style>
+        .table-hover tbody tr:hover {
+            background-color: #f5f5f5;
+            transition: 0.2s;
+        }
+        #searchInput, #categorySelect {
+            max-width: 280px;
+        }
+        .badge {
+            font-size: 0.9rem;
+            padding: 5px 10px;
+            border-radius: 6px;
+        }
+    </style>
+</head>
+
+<body>
+<div layout:fragment="content">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="text-primary mb-0">
+            <i class="fas fa-boxes"></i> Kho hàng - [[${branch.branchName}]]
+        </h4>
+
+        <div class="d-flex gap-2">
+            <select id="categorySelect" class="form-control mr-2">
+                <option value="">-- Tất cả danh mục --</option>
+            </select>
+            <input id="searchInput" type="text" class="form-control" placeholder="🔍 Tìm sản phẩm...">
+        </div>
+    </div>
+
+    <div class="table-responsive shadow-sm rounded">
+        <table class="table table-bordered table-hover align-middle" id="productTable">
+            <thead class="thead-dark text-center">
+                <tr>
+                    <th>Mã</th>
+                    <th>Tên sản phẩm</th>
+                    <th>Size</th>
+                    <th>Đường</th>
+                    <th>Số lượng</th>
+                    <th>Trạng thái</th>
+                </tr>
+            </thead>
+            <tbody class="text-center">
+                <tr>
+                    <td colspan="6" class="text-muted py-4">
+                        <div class="spinner-border text-primary" role="status"></div>
+                        <p class="mt-2">Đang tải dữ liệu...</p>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script th:inline="javascript">
+document.addEventListener("DOMContentLoaded", () => {
+    const branchId = /*[[${branch.id}]]*/ 0;
+    console.log("✅ branchId =", branchId);
+
+    const tbody = document.querySelector("#productTable tbody");
+    const searchInput = document.getElementById("searchInput");
+    const categorySelect = document.getElementById("categorySelect");
+
+    if (!branchId || branchId === 0) {
+        tbody.innerHTML = `
+            <tr><td colspan="6" class="text-danger py-3">
+                Không tìm thấy chi nhánh hợp lệ (branchId = 0).
+            </td></tr>`;
+        return;
+    }
+
+    // ⚙️ Load sản phẩm của chi nhánh
+    function loadProducts(url = `/api/branch-products/branch/${branchId}`) {
+        console.log("📡 Fetching:", url);
+        fetch(url)
+            .then(res => res.json())
+            .then(data => {
+                console.log("📦 Dữ liệu nhận được:", data);
+                const products = data.products || data || [];
+                if (products.length === 0) {
+                    tbody.innerHTML = `
+                        <tr><td colspan="6" class="text-muted py-4">
+                            Không có sản phẩm nào trong kho.
+                        </td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = "";
+                products.forEach(p => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${p.productCode || "—"}</td>
+                            <td>
+                                <a href="/vendor-page/product-detail?productDetailId=${p.productDetailId}" 
+                                   class="text-primary font-weight-bold">
+                                    ${p.productName}
+                                </a>
+                            </td>
+                            <td>${p.size?.name || "—"}</td>
+                            <td>${p.color?.name || "—"}</td>
+                            <td>${p.quantity}</td>
+                            <td>
+                                ${p.quantity > 0
+                                    ? '<span class="badge badge-success">Còn hàng</span>'
+                                    : '<span class="badge badge-secondary">Hết hàng</span>'}
+                            </td>
+                        </tr>`;
+                });
+            })
+            .catch(err => {
+                console.error("❌ Lỗi khi tải dữ liệu:", err);
+                tbody.innerHTML = `
+                    <tr><td colspan="6" class="text-danger py-3">
+                        Lỗi khi tải dữ liệu: ${err.message}
+                    </td></tr>`;
+            });
+    }
+
+    // 🗂️ Load danh mục giả lập
+    function loadCategories() {
+        const demoCats = [
+            { id: 1, name: 'Trà sữa' },
+            { id: 2, name: 'Hồng trà' },
+            { id: 3, name: 'Trà trái cây' }
+        ];
+        demoCats.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c.id;
+            opt.textContent = c.name;
+            categorySelect.appendChild(opt);
+        });
+    }
+
+    // 🔍 Lọc theo keyword
+    searchInput.addEventListener("input", function () {
+        const keyword = this.value.toLowerCase();
+        const rows = tbody.querySelectorAll("tr");
+        rows.forEach(row => {
+            const name = row.children[1]?.textContent.toLowerCase();
+            const code = row.children[0]?.textContent.toLowerCase();
+            row.style.display = (name?.includes(keyword) || code?.includes(keyword)) ? "" : "none";
+        });
+    });
+
+    // 📂 Lọc theo danh mục
+    categorySelect.addEventListener("change", function () {
+        const catId = this.value;
+        const url = catId
+            ? `/api/branch-products/branch/${branchId}/category/${catId}`
+            : `/api/branch-products/branch/${branchId}`;
+        loadProducts(url);
+    });
+
+    // 🚀 Khi trang load xong
+    loadCategories();
+    loadProducts();
+});
+</script>
+
+</body>
+</html>

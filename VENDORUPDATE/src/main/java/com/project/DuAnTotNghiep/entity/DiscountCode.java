@@ -1,6 +1,5 @@
 package com.project.DuAnTotNghiep.entity;
 
-import com.project.DuAnTotNghiep.entity.enumClass.DiscountCodeType;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -15,12 +14,12 @@ import java.util.Date;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-
 @Entity
 @Table(name = "discount_code")
 public class DiscountCode {
+
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Nationalized
@@ -28,19 +27,32 @@ public class DiscountCode {
 
     @Nationalized
     private String detail;
+
     private int type;
 
-    @Column(nullable = true)
+    @Column(name = "maximum_amount", nullable = true)
     private Integer maximumAmount;
 
-    @Column(nullable = true)
+    @Column(name = "percentage", nullable = true)
     private Integer percentage;
+
+    @Column(name = "start_date")
     private Date startDate;
+
+    @Column(name = "end_date")
     private Date endDate;
-    @Column(nullable = true)
+
+    @Column(name = "discount_amount", nullable = true)
     private Double discountAmount;
+
+    @Column(name = "minimum_amount_in_cart")
     private Double minimumAmountInCart;
+
+    @Column(name = "maximum_usage")
     private Integer maximumUsage;
+
     private int status;
-    private boolean deleteFlag;
+
+    @Column(name = "delete_flag", nullable = false)
+    private boolean deleteFlag = false;
 }

@@ -24,7 +24,6 @@ public class ChatController {
 
     @MessageMapping("/chat.send")
     public void handleMessage(@Payload ChatMessage message, Principal principal) {
-        System.out.println("🔥 Received message: " + message.getFrom() + " -> " + message.getTo() + ": " + message.getContent());
         
         if (message.getFrom() == null || message.getFrom().isBlank()) {
             message.setFrom(principal != null ? principal.getName() : "guest");
@@ -53,7 +52,6 @@ public class ChatController {
             entity.setCreatedAt(LocalDateTime.now());
             
             ChatMessageEntity saved = chatRepo.save(entity);
-            System.out.println("✅ Message saved to DB with ID: " + saved.getId() + ", RoomId: " + roomId);
         } catch (Exception e) {
             System.err.println("❌ Error saving message to DB: " + e.getMessage());
             e.printStackTrace();
@@ -62,10 +60,8 @@ public class ChatController {
         // ✅ Gửi realtime
         if (receiver != null && !receiver.isBlank()) {
             messagingTemplate.convertAndSendToUser(receiver, "/queue/messages", message);
-            System.out.println("📤 Sent private to: " + receiver);
         } else {
             messagingTemplate.convertAndSend("/topic/public", message);
-            System.out.println("📢 Sent public message");
         }
     }
 

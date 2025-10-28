@@ -13,25 +13,27 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import com.project.DuAnTotNghiep.dto.Cart.CartDto;
 import com.project.DuAnTotNghiep.dto.Cart.GuestCartDto;
 
-import javax.servlet.http.HttpSession; // hoặc jakarta.servlet.http.HttpSession
+import javax.servlet.http.HttpSession;
 import java.util.ArrayList;
 import java.util.List;
-
 import java.util.stream.Collectors;
 
 @Controller
 public class ShopProductController {
+
 	private final ProductService productService;
 	private final SizeService sizeService;
 	private final ColorService colorService;
 	private final ProductDetailService productDetailService;
 	private final CategoryService categoryService;
 
-	public ShopProductController(ProductService productService, SizeService sizeService, ColorService colorService,
-			ProductDetailService productDetailService, CategoryService categoryService) {
+	public ShopProductController(ProductService productService,
+								 SizeService sizeService,
+								 ColorService colorService,
+								 ProductDetailService productDetailService,
+								 CategoryService categoryService) {
 		this.productService = productService;
 		this.sizeService = sizeService;
 		this.colorService = colorService;
@@ -41,7 +43,7 @@ public class ShopProductController {
 
 	@GetMapping("/getproduct")
 	public String getProduct(Model model, SearchProductDto searchProductDto,
-			@PageableDefault(size = 18) Pageable pageable) {
+							 @PageableDefault(size = 18) Pageable pageable) {
 
 		List<Category> categories = categoryService.getAll();
 		Page<ProductDto> products = productService.searchProduct(searchProductDto, pageable);
@@ -50,7 +52,7 @@ public class ShopProductController {
 			int pageNumber = pageable.getPageNumber();
 			int pageSize = pageable.getPageSize();
 			Sort sort = pageable.getSort();
-//            String url = "&size=" + pageSize;
+
 			String url = "";
 
 			if (searchProductDto.getKeyword() != null) {
@@ -59,21 +61,12 @@ public class ShopProductController {
 
 			if (sort.isSorted()) {
 				List<Sort.Order> orders = sort.toList();
-
-				// Tạo một danh sách để lưu trữ chuỗi sắp xếp cho mỗi trường
 				List<String> sortStrings = new ArrayList<>();
 
 				for (Sort.Order order : orders) {
-					// Lấy tên trường (field)
 					String property = order.getProperty();
-
-					// Kiểm tra xem có phải là sắp xếp giảm dần không
 					boolean isDescending = order.isDescending();
-
-					// Tạo chuỗi sắp xếp dạng "field,asc" hoặc "field,desc"
 					String sortString = property + "," + (isDescending ? "desc" : "asc");
-
-					// Thêm chuỗi sắp xếp vào danh sách
 					sortStrings.add(sortString);
 				}
 				url += "&sort=" + String.join(",", sortStrings);
@@ -83,13 +76,12 @@ public class ShopProductController {
 			if (searchProductDto.getMinPrice() != null) {
 				url += "&minPrice=" + searchProductDto.getMinPrice();
 			}
-			if (searchProductDto.getMinPrice() != null) {
+			if (searchProductDto.getMaxPrice() != null) {
 				url += "&maxPrice=" + searchProductDto.getMaxPrice();
 			}
 			if (searchProductDto.getCategoryId() != null) {
-				url += "&category=" + searchProductDto.getCategoryId().stream().map(Object::toString) // Chuyển đổi mỗi
-																										// số thành
-																										// chuỗi
+				url += "&category=" + searchProductDto.getCategoryId()
+						.stream().map(Object::toString)
 						.collect(Collectors.joining(","));
 			}
 			if (searchProductDto.getGender() != null) {
@@ -103,18 +95,6 @@ public class ShopProductController {
 		model.addAttribute("dataFilter", searchProductDto);
 		return "user/shop-product";
 	}
-
-//    private ProductDto mapToDto(Product product) {
-//        ProductDto productDto = new ProductDto();
-//        productDto.setId(product.getId());
-//        productDto.setName(product.getName());
-//        productDto.setCode(product.getCode());
-//        productDto.setBrandId(product.getBrand().getId());
-//        productDto.setMaterialId(product.getMaterial().getId());
-//        productDto.setCreateDate(product.getCreateDate());
-//        productDto.setUpdatedDate(product.getUpdatedDate());
-//        productDto.setImageUrl(product.getImage().get(0).getLink());
-//    }
 
 	@GetMapping("/getproduct/search")
 	public String getProductSearch(Model model, Pageable pageable, SearchProductDto searchDto) {
@@ -136,8 +116,7 @@ public class ShopProductController {
 	@ResponseBody
 	@GetMapping("/productDetails/{productId}/product")
 	public List<ProductDetailDto> getProductDetailJson(@PathVariable Long productId) throws NotFoundException {
-		List<ProductDetailDto> productDetails = productDetailService.getByProductId(productId);
-		return productDetails;
+		return productDetailService.getByProductId(productId);
 	}
 
 	@ModelAttribute("listSizes")
@@ -150,19 +129,18 @@ public class ShopProductController {
 		return colorService.findAll();
 	}
 
-	// ====================== THÊM CHO GUEST ======================
+	// ====================== GIỎ HÀNG KHÁCH (GUEST) ======================
 	@ResponseBody
 	@PostMapping("/add-to-cart-guest")
-	public String addToCartGuest(@RequestParam("productId") Long productId, @RequestParam("quantity") int quantity,
-			HttpSession session) {
+	public String addToCartGuest(@RequestParam("productId") Long productId,
+								 @RequestParam("quantity") int quantity,
+								 HttpSession session) {
 
-		// ✅ Lấy giỏ hàng trong session (nếu chưa có thì tạo mới)
 		List<GuestCartDto> guestCart = (List<GuestCartDto>) session.getAttribute("guestCart");
 		if (guestCart == null) {
 			guestCart = new ArrayList<>();
 		}
 
-		// ✅ Kiểm tra sản phẩm đã tồn tại trong giỏ chưa
 		boolean found = false;
 		for (GuestCartDto item : guestCart) {
 			if (item.getProductId().equals(productId)) {
@@ -172,7 +150,6 @@ public class ShopProductController {
 			}
 		}
 
-		// ✅ Nếu chưa có thì thêm mới
 		if (!found) {
 			GuestCartDto newItem = new GuestCartDto();
 			newItem.setProductId(productId);
@@ -181,13 +158,17 @@ public class ShopProductController {
 				Product product = productService.getProductById(productId)
 						.orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm với ID: " + productId));
 				newItem.setName(product.getName());
-				// Lấy ảnh đầu tiên nếu có
-				if (product.getImage() != null && !product.getImage().isEmpty()) {
-					newItem.setImageUrl(product.getImage().get(0).getLink());
+
+				// ✅ An toàn khi lấy ảnh
+				List<Image> images = product.getImage();
+				if (images != null && !images.isEmpty()) {
+					newItem.setImageUrl(images.get(0).getLink());
 				} else {
 					newItem.setImageUrl("/images/default-product.png");
 				}
+
 				newItem.setPrice(product.getPrice());
+
 			} catch (Exception e) {
 				newItem.setName("Sản phẩm #" + productId);
 				newItem.setPrice(0.0);
@@ -198,9 +179,7 @@ public class ShopProductController {
 			guestCart.add(newItem);
 		}
 
-		// ✅ Lưu lại vào session
 		session.setAttribute("guestCart", guestCart);
-
 		return "Đã thêm vào giỏ hàng (Guest)";
 	}
 }

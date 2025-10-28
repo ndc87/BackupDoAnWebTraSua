@@ -13,7 +13,7 @@ import java.util.Date;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Table(name = "Account")
+@Table(name = "account") // chú ý viết thường đúng như tên bảng thật trong SQL
 public class Account implements Serializable {
 
     @Id
@@ -24,31 +24,33 @@ public class Account implements Serializable {
     private String code;
 
     @DateTimeFormat(pattern = "yyyy-MM-dd")
+    @Column(name = "birth_day")
     private Date birthDay;
 
     private String email;
     private String password;
+
+    @Column(name = "create_date")
     private LocalDateTime createDate;
+
+    @Column(name = "update_date")
     private LocalDateTime updateDate;
 
-    // ✅ Mặc định tài khoản không bị khóa
-    @Column(nullable = false)
+    @Column(name = "is_non_locked", nullable = false)
     private boolean isNonLocked = true;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "customer_id", nullable = true)
     private Customer customer;
 
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "roleId", nullable = false)
+    @ManyToOne(fetch = FetchType.EAGER) // load role sẵn để tránh lazy lỗi
+    @JoinColumn(name = "role_id")
     private Role role;
 
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "branch_id", nullable = true)
     private Branch branch;
 
-    // ⚠️ Giữ phương thức này để Spring không crash khi gọi isEnabled()
-    // nhưng luôn trả true (vì DB không có cột enabled)
     public boolean isEnabled() {
         return true;
     }

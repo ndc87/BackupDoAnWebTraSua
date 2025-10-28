@@ -1,30 +1,52 @@
 package com.project.DuAnTotNghiep.entity;
 
 import lombok.*;
-import org.hibernate.annotations.Nationalized;
-
 import javax.persistence.*;
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.Date;
 
-@Entity
-@Table(name = "Image")
-@Data
+@Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
+@Entity
+@Table(name = "image")
 public class Image implements Serializable {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Nationalized
-    private String name;
+
+    @Column(name = "create_date")
     private LocalDateTime createDate;
+
+    @Column(name = "update_date")
     private LocalDateTime updateDate;
-    private String link;
+
+    @Column(name = "file_type")
     private String fileType;
 
-    @ManyToOne
-    @JoinColumn(name = "productId")
+    @Column(name = "link")
+    private String link;
+
+    @Column(name = "name")
+    private String name;
+
+    // 🔗 Quan hệ nhiều ảnh thuộc về 1 sản phẩm
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_id")
     private Product product;
+    
+    
+ // ✅ Thêm constructor dùng cho ProductController
+    public Image(Long id, String name, LocalDateTime createDate, LocalDateTime updateDate,
+                 String link, String fileType, Product product) {
+        this.id = id;
+        this.name = name;
+        this.createDate = createDate;
+        this.updateDate = updateDate;
+        this.link = link;
+        this.fileType = fileType;
+        this.product = product;
+    }
 }

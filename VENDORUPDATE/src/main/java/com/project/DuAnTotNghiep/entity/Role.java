@@ -12,7 +12,7 @@ import java.util.Date;
 @Getter
 @Setter
 @Entity
-@Table(name = "Role")
+@Table(name = "role")
 public class Role implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -21,6 +21,10 @@ public class Role implements Serializable {
     @Enumerated(EnumType.STRING)
     @Column(length = 50, nullable = false)
     private RoleName name;
+    
+    @Column(name = "create_date")
     private Date createDate;
+    
+    @Column(name = "update_date")
     private Date updateDate;
 }

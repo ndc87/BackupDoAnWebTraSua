@@ -13,17 +13,22 @@ import java.util.List;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-
 @Entity
-@Table(name = "Customer")
+@Table(name = "customer")
 public class Customer {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     private String code;
+
     @Nationalized
     private String name;
+
+    @Column(name = "phone_number") // ✅ Map đúng với cột thật trong DB
     private String phoneNumber;
+
     private String email;
 
     @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, orphanRemoval = true)

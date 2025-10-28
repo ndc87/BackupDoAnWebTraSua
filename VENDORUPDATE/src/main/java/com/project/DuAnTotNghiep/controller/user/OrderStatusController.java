@@ -53,7 +53,6 @@ public class OrderStatusController {
         // ✅ Ép Hibernate reload dữ liệu thật từ DB để tránh cache cũ
         billPage.forEach(bill -> {
             entityManager.refresh(bill);
-            System.out.println("🧾 BILL FROM DB (REFRESHED) => ID: " + bill.getId() + ", AMOUNT: " + bill.getAmount());
         });
 
         model.addAttribute("bills", billPage);

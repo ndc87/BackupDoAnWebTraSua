@@ -105,8 +105,13 @@ public class MaterialController {
     }
 
     @GetMapping("/material-delete/{id}")
-    public String delete(@PathVariable("id") Long id, ModelMap modelMap){
-        materialService.delete(id);
+    public String deleteMaterial(@PathVariable("id") Long id, RedirectAttributes redirectAttributes) {
+        try {
+            materialService.delete(id);
+            redirectAttributes.addFlashAttribute("successMessage", "Xóa loại trà thành công");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
         return "redirect:/admin/material-all";
     }
 }

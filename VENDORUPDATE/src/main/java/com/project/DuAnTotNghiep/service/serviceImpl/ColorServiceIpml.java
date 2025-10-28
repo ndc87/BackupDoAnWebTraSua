@@ -55,9 +55,19 @@ public class ColorServiceIpml implements ColorService {
 
     @Override
     public void delete(Long id) {
-        Color existingColor = colorRepo.findById(id).orElseThrow(() -> new NotFoundException("Không tìm thấy % đường có id " + id) );
-        existingColor.setDeleteFlag(true);
-        colorRepo.save(existingColor);
+        Color color = colorRepo.findById(id)
+            .orElseThrow(() -> new NotFoundException("Không tìm thấy Màu có id " + id));
+
+        int countActive = productRepository.countActiveProductsByColorId(id);
+        if (countActive > 0) {
+            throw new ShopApiException(HttpStatus.BAD_REQUEST,
+                "Không thể xóa Màu này vì đang được sử dụng trong sản phẩm còn hoạt động");
+        }
+
+        color.setDeleteFlag(true);
+        colorRepo.save(color);
+
+        colorRepo.delete(color);
     }
 
     @Override
@@ -83,7 +93,7 @@ public class ColorServiceIpml implements ColorService {
 
     @Override
     public Page<Color> findAll(Pageable pageable) {
-        return colorRepo.findAll(pageable);
+        return colorRepo.findAllByDeleteFlagFalse(pageable);
     }
 
     @Override

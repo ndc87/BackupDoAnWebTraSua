@@ -126,20 +126,44 @@ public class AuthController {
     public String resetPassword(@RequestParam String verificationCode,
                                 @RequestParam String newPassword,
                                 RedirectAttributes model) {
-        // Kiểm tra mã xác nhận và lấy người dùng liên kết
-        Account account = verificationCodeService.verifyCode(verificationCode);
-
-        if (account != null) {
-            // Đặt lại mật khẩu và xóa mã xác nhận
+        try {
+            Account account = verificationCodeService.verifyCode(verificationCode);
             accountService.resetPassword(account, newPassword);
             model.addFlashAttribute("success", "Đặt lại mật khẩu thành công");
             return "redirect:/user-login";
-        } else {
-            // Mã xác nhận không hợp lệ
-            model.addFlashAttribute("errorMessage", "Mã xác thực không hợp lệ");
+        } catch (ShopApiException ex) {
+            model.addFlashAttribute("errorMessage", ex.getMessage());
+            return "redirect:/reset-pass";
+        } catch (Exception ex) {
+            model.addFlashAttribute("errorMessage", "Có lỗi xảy ra khi đặt lại mật khẩu.");
             return "redirect:/reset-pass";
         }
     }
+
+    // --- Added for forgot password flow ---
+    @PostMapping("/reset-page")
+    public String sendResetCode(@RequestParam("email") String email, RedirectAttributes redirectAttributes) {
+        Account account = accountService.findByEmail(email);
+        if (account == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Email không tồn tại trong hệ thống.");
+            return "redirect:/forgot-pass";
+        }
+        try {
+            verificationCodeService.createVerificationCode(email);
+            redirectAttributes.addFlashAttribute("success", "Mã xác thực đã được gửi tới " + email + ". Vui lòng kiểm tra email.");
+            redirectAttributes.addFlashAttribute("email", email);
+            return "redirect:/reset-pass";
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Không thể gửi mã đặt lại mật khẩu: " + e.getMessage());
+            return "redirect:/forgot-pass";
+        }
+    }
+
+    @GetMapping("/reset-pass")
+    public String resetPassPage() {
+        return "user/reset-pass";
+    }
+    
     @GetMapping("/verify-otp")
     public String verifyOtpPage() {
         return "user/verify-otp"; // Trang HTML để người dùng nhập mã OTP

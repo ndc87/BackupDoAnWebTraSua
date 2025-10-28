@@ -33,9 +33,9 @@ public class SizeServiceImpl implements SizeService {
 
     @Override
     public Page<Size> getAllSize(Pageable pageable) {
-        return sizeRepository.findAll(pageable);
+        return sizeRepository.findAllByDeleteFlagFalse(pageable);
     }
-
+    
     @Override
     public Size save(Size size) {
         size.setDeleteFlag(false);
@@ -66,10 +66,24 @@ public class SizeServiceImpl implements SizeService {
 
     @Override
     public void delete(Long id) {
-        Size size = sizeRepository.findById(id).orElseThrow(() -> new NotFoundException("Không tìm thấy cỡ có id " + id) );
+        Size size = sizeRepository.findById(id)
+            .orElseThrow(() -> new NotFoundException("Không tìm thấy Size có id " + id));
+
+        // Kiểm tra có sản phẩm nào đang hoạt động dùng size này không
+        int countActive = productRepository.countActiveProductsBySizeId(id);
+        if (countActive > 0) {
+            throw new ShopApiException(HttpStatus.BAD_REQUEST,
+                "Không thể xóa Size này vì đang được sử dụng trong sản phẩm còn hoạt động");
+        }
+
+     // Bước 1: Xóa mềm
         size.setDeleteFlag(true);
         sizeRepository.save(size);
+
+        // Bước 2: Xóa cứng khỏi DB sau khi đã set flag
+        sizeRepository.delete(size);
     }
+
 
     @Override
     public Optional<Size> findById(Long id) {
@@ -105,4 +119,5 @@ public class SizeServiceImpl implements SizeService {
         Size sizeNew = sizeRepository.save(size);
         return new SizeDto(sizeNew.getId(), sizeNew.getCode(), sizeNew.getName());
     }
+    
 }

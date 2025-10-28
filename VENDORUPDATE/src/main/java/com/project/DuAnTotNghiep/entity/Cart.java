@@ -1,29 +1,29 @@
 package com.project.DuAnTotNghiep.entity;
 
 import lombok.*;
-
 import javax.persistence.*;
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.Date;
-import java.util.List;
 
 @Entity
-@Table(name = "Cart")
+@Table(name = "cart")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class Cart implements Serializable {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // 🔹 Liên kết đến bảng Account qua cột account_id
     @ManyToOne
-    @JoinColumn(name = "accountId")
+    @JoinColumn(name = "account_id")
     private Account account;
 
+    // 🔹 Liên kết đến bảng ProductDetail qua cột product_detail_id
     @ManyToOne
-    @JoinColumn(name = "productDetailId")
+    @JoinColumn(name = "product_detail_id")
     private ProductDetail productDetail;
 
     private int quantity;
@@ -33,5 +33,4 @@ public class Cart implements Serializable {
 
     @Column(name = "update_date")
     private LocalDateTime updateDate;
-
 }

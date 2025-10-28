@@ -3,8 +3,10 @@ package com.project.DuAnTotNghiep.service.serviceImpl;
 import com.project.DuAnTotNghiep.dto.Brand.BrandDto;
 import com.project.DuAnTotNghiep.entity.Brand;
 import com.project.DuAnTotNghiep.entity.Color;
+import com.project.DuAnTotNghiep.exception.NotFoundException;
 import com.project.DuAnTotNghiep.exception.ShopApiException;
 import com.project.DuAnTotNghiep.repository.BrandRepository;
+import com.project.DuAnTotNghiep.repository.ProductRepository;
 import com.project.DuAnTotNghiep.service.BrandService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -21,7 +23,9 @@ public class BrandServiceImpl implements BrandService {
     @Autowired
     private BrandRepository brandRepository;
 
-
+	@Autowired
+	private ProductRepository productRepository;
+	
     @Override
     public Page<Brand> getAllBrand(Pageable pageable) {
         return brandRepository.findAll(pageable);
@@ -64,10 +68,21 @@ public class BrandServiceImpl implements BrandService {
 
     @Override
     public void delete(Long id) {
-        Brand brand = brandRepository.findById(id).orElseThrow(null);
+        Brand brand = brandRepository.findById(id)
+            .orElseThrow(() -> new NotFoundException("Không tìm thấy Thương hiệu có id " + id));
+
+        int countActive = productRepository.countActiveProductsByBrandId(id);
+        if (countActive > 0) {
+            throw new ShopApiException(HttpStatus.BAD_REQUEST,
+                "Không thể xóa Thương hiệu này vì đang được sử dụng trong sản phẩm còn hoạt động");
+        }
+
         brand.setDeleteFlag(true);
         brandRepository.save(brand);
+
+        brandRepository.delete(brand);
     }
+
 
     @Override
     public Optional<Brand> findById(Long id) {

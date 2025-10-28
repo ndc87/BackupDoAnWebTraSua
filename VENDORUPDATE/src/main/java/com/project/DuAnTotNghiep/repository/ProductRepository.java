@@ -23,7 +23,7 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
     boolean existsByCode(String code);
 
     Page<Product> findAllByStatus(int status, Pageable pageable);
-    Page<Product> findAllByStatusAndDeleteFlag(int status, boolean deleteFlag, Pageable pageable);
+    Page<Product> findAllByStatusAndDeleteFlag(int status, boolean delete_flag, Pageable pageable);
 
     // 🔍 Tìm sản phẩm theo tên
     @Query(value = """
@@ -164,4 +164,20 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
 ORDER BY MAX(p.create_date) DESC
         """, nativeQuery = true)
     List<ProductStatistic> getStatisticProduct(String fromDate, String toDate);
+    @Query("SELECT COUNT(pd) FROM ProductDetail pd WHERE pd.size.id = :sizeId AND pd.product.deleteFlag = false")
+    int countActiveProductsBySizeId(Long sizeId);
+    
+	@Query("SELECT COUNT(p) FROM Product p WHERE p.color.id = :colorId AND p.deleteFlag = 0")
+	int countActiveProductsByColorId(Long colorId);
+
+    @Query("SELECT COUNT(p) FROM Product p WHERE p.category.id = :categoryId AND p.deleteFlag = 0")
+    int countActiveProductsByCategoryId(Long categoryId);
+
+    @Query("SELECT COUNT(p) FROM Product p WHERE p.material.id = :materialId AND p.deleteFlag = 0")
+    int countActiveProductsByMaterialId(Long materialId);
+
+    @Query("SELECT COUNT(p) FROM Product p WHERE p.brand.id = :brandId AND p.deleteFlag = 0")
+    int countActiveProductsByBrandId(Long brandId);
+    
+    
 }

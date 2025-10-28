@@ -105,9 +105,13 @@ public class SizeController {
     }
 
     @GetMapping("/size-delete/{id}")
-    public String delete(@PathVariable("id") Long id, Model model){
-        sizeService.delete(id);
-        model.addAttribute("successMessage", "Xóa Size thành công");
+    public String delete(@PathVariable("id") Long id, RedirectAttributes redirectAttributes) {
+        try {
+            sizeService.delete(id);
+            redirectAttributes.addFlashAttribute("successMessage", "Xóa Size thành công");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
         return "redirect:/admin/size-all";
     }
 }

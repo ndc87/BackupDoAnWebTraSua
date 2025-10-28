@@ -103,8 +103,13 @@ public class ColorController {
     }
 
     @GetMapping("/color-delete/{id}")
-    public String delete(@PathVariable("id") Long id, ModelMap modelMap){
-        colorService.delete(id);
+    public String deleteColor(@PathVariable("id") Long id, RedirectAttributes redirectAttributes) {
+        try {
+            colorService.delete(id);
+            redirectAttributes.addFlashAttribute("successMessage", "Xóa thể tích đường thành công");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
         return "redirect:/admin/color-list";
     }
 }

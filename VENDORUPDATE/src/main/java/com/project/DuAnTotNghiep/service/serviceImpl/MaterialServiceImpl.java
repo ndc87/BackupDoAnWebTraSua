@@ -6,6 +6,7 @@ import com.project.DuAnTotNghiep.entity.Material;
 import com.project.DuAnTotNghiep.exception.NotFoundException;
 import com.project.DuAnTotNghiep.exception.ShopApiException;
 import com.project.DuAnTotNghiep.repository.MaterialRepository;
+import com.project.DuAnTotNghiep.repository.ProductRepository;
 import com.project.DuAnTotNghiep.service.MaterialService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -21,10 +22,12 @@ public class MaterialServiceImpl implements MaterialService {
 
     @Autowired
     private MaterialRepository materialRepository;
+    @Autowired
+    private ProductRepository productRepository;
 
     @Override
     public Page<Material> getAllMaterial(Pageable pageable) {
-        return materialRepository.findAll(pageable);
+        return materialRepository.findAllByDeleteFlagFalse(pageable);
     }
 
     @Override
@@ -55,9 +58,19 @@ public class MaterialServiceImpl implements MaterialService {
 
     @Override
     public void delete(Long id) {
-        Material material = materialRepository.findById(id).orElseThrow(null);
+        Material material = materialRepository.findById(id)
+            .orElseThrow(() -> new NotFoundException("Không tìm thấy Chất liệu có id " + id));
+
+        int countActive = productRepository.countActiveProductsByMaterialId(id);
+        if (countActive > 0) {
+            throw new ShopApiException(HttpStatus.BAD_REQUEST,
+                "Không thể xóa Chất liệu này vì đang được sử dụng trong sản phẩm còn hoạt động");
+        }
+
         material.setDeleteFlag(true);
         materialRepository.save(material);
+
+        materialRepository.delete(material);
     }
 
     @Override

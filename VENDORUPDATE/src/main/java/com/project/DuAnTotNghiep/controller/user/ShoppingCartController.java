@@ -5,7 +5,9 @@ import com.project.DuAnTotNghiep.dto.Cart.CartDto;
 import com.project.DuAnTotNghiep.dto.Cart.GuestCartDto;
 import com.project.DuAnTotNghiep.dto.Cart.ProductCart;
 import com.project.DuAnTotNghiep.dto.DiscountCode.DiscountCodeDto;
+import com.project.DuAnTotNghiep.entity.Product;
 import com.project.DuAnTotNghiep.exception.NotFoundException;
+import com.project.DuAnTotNghiep.repository.ProductRepository;
 import com.project.DuAnTotNghiep.service.AddressShippingService;
 import com.project.DuAnTotNghiep.service.BillService;
 import com.project.DuAnTotNghiep.service.CartService;
@@ -18,26 +20,29 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import javax.servlet.http.HttpSession;
 
 @Controller
 public class ShoppingCartController {
-    private final CartService cartService;
-    private final BillService billService;
-    private final DiscountCodeService discountCodeService;
-    private final AddressShippingService addressShippingService;
+	private final CartService cartService;
+	private final BillService billService;
+	private final DiscountCodeService discountCodeService;
+	private final AddressShippingService addressShippingService;
+	private final ProductRepository productRepository;
 
-    public ShoppingCartController(CartService cartService, BillService billService, 
-                                   DiscountCodeService discountCodeService, 
-                                   AddressShippingService addressShippingService) {
-        this.cartService = cartService;
-        this.billService = billService;
-        this.discountCodeService = discountCodeService;
-        this.addressShippingService = addressShippingService;
-    }
+	public ShoppingCartController(CartService cartService, BillService billService,
+			DiscountCodeService discountCodeService, AddressShippingService addressShippingService,
+			ProductRepository productRepository) {
+		this.cartService = cartService;
+		this.billService = billService;
+		this.discountCodeService = discountCodeService;
+		this.addressShippingService = addressShippingService;
+		this.productRepository = productRepository;
+	}
 
-    @GetMapping("/shoping-cart")
+	@GetMapping("/shoping-cart")
     public String viewShoppingCart(Model model, HttpSession session) {
         List<CartDto> cartDtoList = new ArrayList<>();
         boolean isGuest = true;
@@ -82,66 +87,68 @@ public class ShoppingCartController {
             }
         }
 
-        // ✅ Mã giảm giá và địa chỉ (nếu có)
-        Page<DiscountCodeDto> discountCodeList = Page.empty();
-        try {
-            discountCodeList = discountCodeService.getAllAvailableDiscountCode(PageRequest.of(0, 15));
-        } catch (Exception ignored) {}
+		// ✅ Mã giảm giá và địa chỉ (nếu có)
+		Page<DiscountCodeDto> discountCodeList = Page.empty();
+		try {
+			discountCodeList = discountCodeService.getAllAvailableDiscountCode(PageRequest.of(0, 15));
+		} catch (Exception ignored) {
+		}
 
-        List<AddressShippingDto> addressShippingDtos = new ArrayList<>();
-        try {
-            addressShippingDtos = addressShippingService.getAddressShippingByAccountId();
-        } catch (Exception ignored) {}
+		List<AddressShippingDto> addressShippingDtos = new ArrayList<>();
+		try {
+			addressShippingDtos = addressShippingService.getAddressShippingByAccountId();
+		} catch (Exception ignored) {
+		}
 
-        // ✅ Gửi dữ liệu ra view
-        model.addAttribute("discountCodes", discountCodeList.getContent());
-        model.addAttribute("addressShippings", addressShippingDtos);
-        model.addAttribute("carts", cartDtoList);
-        model.addAttribute("isGuest", isGuest);
+		// ✅ Gửi dữ liệu ra view
+		model.addAttribute("discountCodes", discountCodeList.getContent());
+		model.addAttribute("addressShippings", addressShippingDtos);
+		model.addAttribute("carts", cartDtoList);
+		model.addAttribute("isGuest", isGuest);
 
-        return "user/shoping-cart";
-    }
+		return "user/shoping-cart";
+	}
 
-    @ResponseBody
-    @PostMapping("/api/addToCart")
-    public void addToCart(@RequestBody CartDto cartDto) throws NotFoundException {
-        cartService.addToCart(cartDto);
-    }
+	@ResponseBody
+	@PostMapping("/api/addToCart")
+	public void addToCart(@RequestBody CartDto cartDto) throws NotFoundException {
+		cartService.addToCart(cartDto);
+	}
 
-    @ResponseBody
-    @PostMapping("/api/deleteCart/{id}")
-    public void deleteCart(@PathVariable Long id, HttpSession session) {
-        // ✅ Kiểm tra xem có phải guest không
-        List<GuestCartDto> guestCart = (List<GuestCartDto>) session.getAttribute("guestCart");
-        
-        if (guestCart != null && !guestCart.isEmpty()) {
-            // ✅ Xóa khỏi session của guest
-            guestCart.removeIf(item -> item.getProductId().equals(id));
-            session.setAttribute("guestCart", guestCart);
-        } else {
-            // ✅ Xóa khỏi DB của user đăng nhập
-            cartService.deleteCart(id);
-        }
-    }
+	@ResponseBody
+	@PostMapping("/api/deleteCart/{id}")
+	public void deleteCart(@PathVariable Long id, HttpSession session) {
+		// ✅ Kiểm tra xem có phải guest không
+		List<GuestCartDto> guestCart = (List<GuestCartDto>) session.getAttribute("guestCart");
 
-    @ResponseBody
-    @PostMapping("/api/updateCart")
-    public void updateCart(@RequestBody CartDto cartDto, HttpSession session) throws NotFoundException {
-        // ✅ Kiểm tra xem có phải guest không
-        List<GuestCartDto> guestCart = (List<GuestCartDto>) session.getAttribute("guestCart");
-        
-        if (guestCart != null && !guestCart.isEmpty()) {
-            // ✅ Cập nhật session của guest
-            for (GuestCartDto item : guestCart) {
-                if (item.getProductId().equals(cartDto.getId())) {
-                    item.setQuantity(cartDto.getQuantity());
-                    break;
-                }
-            }
-            session.setAttribute("guestCart", guestCart);
-        } else {
-            // ✅ Cập nhật DB của user đăng nhập
-            cartService.updateCart(cartDto);
-        }
-    }
+		if (guestCart != null && !guestCart.isEmpty()) {
+			// ✅ Xóa khỏi session của guest
+			guestCart.removeIf(item -> item.getProductId().equals(id));
+			session.setAttribute("guestCart", guestCart);
+		} else {
+			// ✅ Xóa khỏi DB của user đăng nhập
+			cartService.deleteCart(id);
+		}
+	}
+
+	@ResponseBody
+	@PostMapping("/api/updateCart")
+	public void updateCart(@RequestBody CartDto cartDto, HttpSession session) throws NotFoundException {
+		// ✅ Kiểm tra xem có phải guest không
+		List<GuestCartDto> guestCart = (List<GuestCartDto>) session.getAttribute("guestCart");
+
+		if (guestCart != null && !guestCart.isEmpty()) {
+			// ✅ Cập nhật session của guest
+			for (GuestCartDto item : guestCart) {
+				if (item.getProductId().equals(cartDto.getId())) {
+					item.setQuantity(cartDto.getQuantity());
+					break;
+				}
+			}
+			session.setAttribute("guestCart", guestCart);
+		} else {
+			// ✅ Cập nhật DB của user đăng nhập
+			cartService.updateCart(cartDto);
+		}
+	}
 }

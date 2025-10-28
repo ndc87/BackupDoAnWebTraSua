@@ -57,6 +57,10 @@ public class Product implements Serializable {
     @ManyToOne
     @JoinColumn(name = "material_id")
     private Material material;
+    
+    @ManyToOne
+    @JoinColumn(name = "color_id")
+    private Color color; // them vo db
 
     // 🔗 Quan hệ 1-nhiều với bảng image
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -83,5 +87,9 @@ public class Product implements Serializable {
                 .mapToDouble(ProductDetail::getPrice)
                 .min()
                 .orElse(price);
+    }
+    
+    public Long getId() {
+        return this.id;
     }
 }

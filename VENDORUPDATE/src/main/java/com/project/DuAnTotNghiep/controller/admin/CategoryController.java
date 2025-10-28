@@ -104,8 +104,13 @@ public class CategoryController {
     }
 
     @GetMapping("/category-delete/{id}")
-    public String delete(@PathVariable("id") Long id, ModelMap modelMap){
-        categoryService.delete(id);
+    public String deleteCategory(@PathVariable("id") Long id, RedirectAttributes redirectAttributes) {
+        try {
+            categoryService.delete(id);
+            redirectAttributes.addFlashAttribute("successMessage", "Xóa loại sản phẩm thành công!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
         return "redirect:/admin/category-all";
     }
 }

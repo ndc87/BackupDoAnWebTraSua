@@ -55,4 +55,6 @@ public class DiscountCode {
 
     @Column(name = "delete_flag", nullable = false)
     private boolean deleteFlag = false;
+
+	
 }

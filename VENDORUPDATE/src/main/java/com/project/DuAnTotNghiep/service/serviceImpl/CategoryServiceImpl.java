@@ -2,9 +2,10 @@ package com.project.DuAnTotNghiep.service.serviceImpl;
 
 import com.project.DuAnTotNghiep.dto.Category.CategoryDto;
 import com.project.DuAnTotNghiep.entity.Category;
-import com.project.DuAnTotNghiep.entity.Color;
+import com.project.DuAnTotNghiep.exception.NotFoundException;
 import com.project.DuAnTotNghiep.exception.ShopApiException;
 import com.project.DuAnTotNghiep.repository.CategoryRepository;
+import com.project.DuAnTotNghiep.repository.ProductRepository;
 import com.project.DuAnTotNghiep.service.CategoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -20,11 +21,15 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Autowired
     private CategoryRepository categoryRepository;
+    
+    @Autowired
+    private ProductRepository productRepository;
 
     @Override
     public Page<Category> getAllCategory(Pageable pageable) {
-        return categoryRepository.findAll(pageable);
+        return categoryRepository.findAllByDeleteFlagFalse(pageable);
     }
+    
 
     @Override
     public Category createCategory(Category category) {
@@ -49,9 +54,19 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public void delete(Long id) {
-        Category category = categoryRepository.findById(id).orElseThrow(null);
+        Category category = categoryRepository.findById(id)
+            .orElseThrow(() -> new NotFoundException("Không tìm thấy Danh mục có id " + id));
+
+        int countActive = productRepository.countActiveProductsByCategoryId(id);
+        if (countActive > 0) {
+            throw new ShopApiException(HttpStatus.BAD_REQUEST,
+                "Không thể xóa Danh mục này vì đang được sử dụng trong sản phẩm còn hoạt động");
+        }
+
         category.setDeleteFlag(true);
         categoryRepository.save(category);
+
+        categoryRepository.delete(category);
     }
 
     @Override

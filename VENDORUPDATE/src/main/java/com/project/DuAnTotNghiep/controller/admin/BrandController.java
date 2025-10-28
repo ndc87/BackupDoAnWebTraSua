@@ -104,8 +104,13 @@ public class BrandController {
     }
 
     @GetMapping("/brand-delete/{id}")
-    public String delete(@PathVariable("id") Long id, ModelMap modelMap){
-        brandService.delete(id);
+    public String delete(@PathVariable("id") Long id, RedirectAttributes redirectAttributes) {
+        try {
+            brandService.delete(id);
+            redirectAttributes.addFlashAttribute("successMessage", "Xóa nhãn hàng thành công!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
         return "redirect:/admin/brand-all";
     }
 

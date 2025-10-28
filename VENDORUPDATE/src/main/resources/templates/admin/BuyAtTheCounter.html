@@ -536,6 +536,8 @@
         </script>
         <script th:inline="javascript">
 
+        var currentBranchId = /*[[${#authentication.principal.branchId}]]*/ null;
+        console.log("Branch ID hiện tại:", currentBranchId);
 
             $(document).ready(() => {
                 let voucherChoosed;
@@ -1506,7 +1508,9 @@
                         billingAddress: "",
                         promotionPrice: promotionPrice,
                         voucherId: voucherId,
-                        orderDetailDtos: orderDetails
+                        orderDetailDtos: orderDetails,
+                        branchId: currentBranchId
+
                     };
 
                     // Xử lý khi pt thanh toán là chuyển khoản

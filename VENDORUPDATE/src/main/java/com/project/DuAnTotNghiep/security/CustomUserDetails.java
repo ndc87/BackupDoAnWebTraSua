@@ -70,6 +70,12 @@ public class CustomUserDetails implements UserDetails {
 	public boolean isEnabled() {
 		return true;
 	}
+	public Long getBranchId() {
+	    if (account != null && account.getBranch() != null) {
+	        return account.getBranch().getId();
+	    }
+	    return null;
+	}
 
 
 

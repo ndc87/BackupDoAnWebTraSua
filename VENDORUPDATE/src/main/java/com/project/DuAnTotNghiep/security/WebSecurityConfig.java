@@ -48,13 +48,15 @@ public class WebSecurityConfig {
 
 					// Chức năng admin & vendor dùng chung (shop, sản phẩm, đơn hàng, hóa đơn, doanh
 					// thu, size, brand, bill-return, discount)
-					.antMatchers("/admin/thong-ke-doanh-thu", "/admin/bill-list", "/admin/chi-tiet-san-pham/**",
+					.antMatchers("/admin/thong-ke-doanh-thu", "/admin/bill-list", "/admin/update-bill-status/**",
+							"/admin/update-bill-status2/**", "/admin/getbill-detail/**", "/admin/export-bill",
+							"/admin/export-pdf/**", "/admin/generate-pdf/**", "/admin/chi-tiet-san-pham/**",
 							"/admin/product/**", "/admin/product-all", "/admin/product-create", "/admin/brand-all",
 							"/admin/brand-create", "/admin/brand-detail/**", "/admin/size-all", "/admin/size-create",
 							"/admin/size-detail/**", "/admin/color-list", "/admin/color-create", "/admin/edit-color/**",
-							"/admin/pos", "/admin/generate-pdf/**", "/admin-only/bill-return",
-							"/admin-only/bill-return-create", "/admin-only/bill-return-detail/**",
-							"/admin-only/product-discount", "/admin-only/product-discount-create")
+							"/admin/pos", "/admin-only/bill-return", "/admin-only/bill-return-create",
+							"/admin-only/bill-return-detail/**", "/admin-only/product-discount",
+							"/admin-only/product-discount-create")
 					.hasAnyRole("VENDOR", "ADMIN")
 
 					// Các chức năng chỉ dành cho ADMIN (quản lý user, danh mục, vận chuyển, chiết
@@ -93,8 +95,6 @@ public class WebSecurityConfig {
 			return (web) -> web.ignoring().antMatchers("/img/**", "/js/**", "/css/**", "/fonts/**", "/plugins/**",
 					"/vendor/**", "/static/**", "/webjars/**", "/images/**", "/favicon.ico", "/error");
 		}
-
-		
 
 	}
 }

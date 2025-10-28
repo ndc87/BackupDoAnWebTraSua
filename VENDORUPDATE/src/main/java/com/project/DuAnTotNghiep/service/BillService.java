@@ -66,4 +66,5 @@ public interface BillService {
     Page<BillDto> searchBillJson(SearchBillDto searchBillDto, Pageable pageable);
 
     Page<BillDto> getAllValidBillToReturn( Pageable pageable);
+    Page<BillDtoInterface> findByBranchId(Long branchId, Pageable pageable);
 }

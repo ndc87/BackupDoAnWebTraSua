@@ -592,7 +592,23 @@ public interface BillRepository extends JpaRepository<Bill, Long>, JpaSpecificat
 			    ORDER BY totalQuantity DESC
 			""", nativeQuery = true)
 			List<BestSellerProduct> getBestSellerProductByBranch(@Param("branchId") Long branchId);
-
+		@Query(value = """
+		        SELECT 
+		            b.id AS maHoaDon,
+		            b.code AS maDinhDanh,
+		            c.name AS hoVaTen,
+		            c.phone_number AS soDienThoai,
+		            b.create_date AS ngayTao,
+		            COALESCE(b.amount, 0) AS tongTien,
+		            b.status AS trangThai,
+		            b.invoice_type AS loaiDon
+		        FROM bill b
+		        LEFT JOIN customer c ON b.customer_id = c.id
+		        WHERE b.branch_id = :branchId
+		        """,
+		        countQuery = "SELECT COUNT(*) FROM bill WHERE branch_id = :branchId",
+		        nativeQuery = true)
+		Page<BillDtoInterface> findByBranchId(@Param("branchId") Long branchId, Pageable pageable);
 
 
 }

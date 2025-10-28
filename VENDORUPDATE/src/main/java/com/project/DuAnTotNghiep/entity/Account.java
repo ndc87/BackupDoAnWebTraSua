@@ -43,7 +43,7 @@ public class Account implements Serializable {
     @JoinColumn(name = "customer_id", nullable = true)
     private Customer customer;
 
-    @ManyToOne(fetch = FetchType.EAGER) // load role sẵn để tránh lazy lỗi
+    @ManyToOne(fetch = FetchType.EAGER) 
     @JoinColumn(name = "role_id")
     private Role role;
 

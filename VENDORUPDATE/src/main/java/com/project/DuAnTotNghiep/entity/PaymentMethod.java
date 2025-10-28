@@ -8,7 +8,7 @@ import javax.persistence.*;
 import java.io.Serializable;
 
 @Entity
-@Table(name = "PaymentMethod")
+@Table(name = "payment_method") // ✅ đúng với tên thật trong DB
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -19,5 +19,6 @@ public class PaymentMethod implements Serializable {
     @Nationalized
     @Enumerated(EnumType.STRING)
     private PaymentMethodName name;
+
     private int status;
 }

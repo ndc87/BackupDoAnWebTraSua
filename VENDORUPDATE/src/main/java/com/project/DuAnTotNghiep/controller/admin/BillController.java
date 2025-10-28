@@ -21,6 +21,8 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.web.util.UriComponentsBuilder;
+import com.project.DuAnTotNghiep.repository.AccountRepository;
+import org.springframework.security.core.Authentication;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -36,6 +38,9 @@ import java.util.List;
 @RequestMapping("/admin")
 public class BillController {
 
+	@Autowired
+	private AccountRepository accountRepository;
+	
     @Autowired
     private BillService billService;
     @PersistenceContext
@@ -44,6 +49,7 @@ public class BillController {
     @GetMapping("/bill-list")
     public String getBill(
             Model model,
+            Authentication authentication,
             @RequestParam(name = "page", defaultValue = "0") int page,
             @RequestParam(name = "sort", defaultValue = "ngayTao,desc") String sortField,
             @RequestParam(name = "maDinhDanh", required = false) String maDinhDanh,
@@ -60,7 +66,6 @@ public class BillController {
         Sort.Direction sortDirection = (sortParams.length > 1 && sortParams[1].equalsIgnoreCase("desc"))
                 ? Sort.Direction.DESC : Sort.Direction.ASC;
 
-        // ✅ Chuẩn hóa field sort
         switch (sortFieldName) {
             case "createDate":
             case "ngayTao":
@@ -82,10 +87,10 @@ public class BillController {
 
         Pageable pageable = PageRequest.of(page, pageSize, Sort.by(sortDirection, sortFieldName));
 
-        // ✅ Convert ngày lọc (nếu có)
         LocalDateTime convertedNgayTaoStart = null;
         LocalDateTime convertedNgayTaoEnd = null;
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
         if (ngayTaoStart != null) {
             convertedNgayTaoStart = ngayTaoStart.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
             model.addAttribute("ngayTaoStart", convertedNgayTaoStart.format(formatter));
@@ -95,43 +100,41 @@ public class BillController {
             model.addAttribute("ngayTaoEnd", convertedNgayTaoEnd.format(formatter));
         }
 
-        // ✅ Truy vấn dữ liệu (Projection hoặc Entity)
         Page<BillDtoInterface> bills;
-        if (maDinhDanh != null || ngayTaoStart != null || ngayTaoEnd != null ||
-                trangThai != null || loaiDon != null || soDienThoai != null || hoVaTen != null) {
-            bills = billService.searchListBill(
-                    maDinhDanh != null ? maDinhDanh.trim() : "",
-                    convertedNgayTaoStart, convertedNgayTaoEnd,
-                    trangThai, loaiDon,
-                    soDienThoai != null ? soDienThoai.trim() : "",
-                    hoVaTen != null ? hoVaTen.trim() : "",
-                    pageable
-            );
+
+        // ✅ Nếu là vendor → chỉ lấy bill theo chi nhánh
+        if (authentication != null && authentication.getAuthorities().stream()
+                .anyMatch(r -> r.getAuthority().equals("ROLE_VENDOR"))) {
+
+            String email = authentication.getName();
+            Long branchId = accountRepository.findBranchIdByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy chi nhánh cho vendor: " + email));
+
+            bills = billService.findByBranchId(branchId, pageable);
+            model.addAttribute("isVendor", true);
+            model.addAttribute("branchId", branchId);
+
         } else {
-            bills = billService.findAll(pageable);
+            // ✅ Admin thì lấy toàn bộ
+            if (maDinhDanh != null || ngayTaoStart != null || ngayTaoEnd != null ||
+                    trangThai != null || loaiDon != null || soDienThoai != null || hoVaTen != null) {
+                bills = billService.searchListBill(
+                        maDinhDanh != null ? maDinhDanh.trim() : "",
+                        convertedNgayTaoStart, convertedNgayTaoEnd,
+                        trangThai, loaiDon,
+                        soDienThoai != null ? soDienThoai.trim() : "",
+                        hoVaTen != null ? hoVaTen.trim() : "",
+                        pageable
+                );
+            } else {
+                bills = billService.findAll(pageable);
+            }
+            model.addAttribute("isVendor", false);
         }
 
-        // ✅ Ép Hibernate reload entity mới nhất (nếu service trả về Entity)
-        // Nếu billService trả về DTO Projection thì đoạn này sẽ được bỏ qua an toàn
-        bills.forEach(b -> {
-            if (b instanceof Bill) {
-                entityManager.refresh(b);
-                System.out.println("🧾 BILL ADMIN REFRESHED => ID: " +
-                        ((Bill) b).getId() + ", AMOUNT: " + ((Bill) b).getAmount());
-            }
-        });
-
-        // ✅ Gửi sang view
         model.addAttribute("items", bills);
-        model.addAttribute("maDinhDanh", maDinhDanh);
-        model.addAttribute("trangThai", trangThai);
-        model.addAttribute("loaiDon", loaiDon);
-        model.addAttribute("soDienThoai", soDienThoai);
-        model.addAttribute("hoVaTen", hoVaTen);
-        model.addAttribute("sortField", sortField);
         model.addAttribute("billStatus", BillStatus.values());
         model.addAttribute("invoiceType", InvoiceType.values());
-
         return "admin/bill";
     }
 

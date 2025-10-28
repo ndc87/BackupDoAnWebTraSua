@@ -443,5 +443,9 @@ public class BillServiceImpl implements BillService {
         billDto.setTotalAmount(total);
         return billDto;
     }
+    @Override
+    public Page<BillDtoInterface> findByBranchId(Long branchId, Pageable pageable) {
+        return billRepository.findByBranchId(branchId, pageable);
+    }
 
 }

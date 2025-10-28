@@ -112,7 +112,7 @@ var isUserLoggedIn = /*[[${#authorization.expression('isAuthenticated()')}]]*/ f
 								<a th:href="@{/vendor-page/thong-ke-doanh-thu}"
 									sec:authorize="hasRole('ROLE_VENDOR')"> Trang quản lý
 									(Vendor) </a> <a th:href="@{/cart-status}"
-									th:if="${#authorization.expression('isAuthenticated()')}">Đơn
+									th:if="${#authorization.expression('hasRole(''USER'')')}">Đơn
 									hàng</a> <a th:href="@{/user_logout}"
 									th:if="${#authorization.expression('isAuthenticated()')}">Đăng
 									xuất</a>
